@@ -3,7 +3,7 @@ name: tolmo
 description: |
   Install and use the Tolmo CLI to query infrastructure graphs, run SQL/Cypher
   queries, proxy requests to connected services (AWS, Linear, Sentry, Datadog),
-  and manage code repositories.
+  manage code repositories, and create/manage security findings.
 ---
 
 # tolmo — Cloud Security Platform CLI
@@ -86,6 +86,22 @@ tolmo cypher "MATCH (n) RETURN labels(n), count(*)"
 tolmo cypher --json "MATCH (n) RETURN n LIMIT 5"
 ```
 
+#### Time machine (temporal queries)
+
+Every node and edge has `firstSeenAt` and `lastSeenAt` (epoch ms)
+tracking when resources were first discovered and last seen by crawlers.
+
+```bash
+# Resources added in the last 7 days
+tolmo cypher "MATCH (n:GraphNode) WHERE n.firstSeenAt >= (timestamp() - 7*24*60*60*1000) RETURN n.resourceType, n.resourceKey ORDER BY n.firstSeenAt DESC"
+
+# Stale resources not seen in 48 hours
+tolmo cypher "MATCH (n:GraphNode) WHERE n.lastSeenAt < (timestamp() - 48*60*60*1000) RETURN n.resourceType, n.resourceKey LIMIT 50"
+
+# New relationships in the last 24 hours
+tolmo cypher "MATCH ()-[r:GRAPH_EDGE]->() WHERE r.firstSeenAt >= (timestamp() - 24*60*60*1000) RETURN r.type, count(r) AS cnt ORDER BY cnt DESC"
+```
+
 ### Repository operations
 
 ```bash
@@ -126,6 +142,57 @@ tolmo threat-model get                     # Download latest run
 tolmo threat-model get --run <scanId>      # Download specific run
 tolmo threat-model get --step vuln-qualif  # Download single step
 ```
+
+### Findings
+
+Manage security findings for the current organization. Findings have a
+severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
+(`draft`|`published` — org members only see published), and a status
+(`open`|`in_review`|`closed`).
+
+```bash
+# List findings (published only for non-super-admins)
+tolmo findings list
+tolmo findings list --status open --severity critical
+tolmo findings list --json
+
+# Show a single finding (prints markdown description)
+tolmo findings get <findingId>
+tolmo findings get <findingId> --json
+
+# Create a finding
+tolmo findings create \
+  --title "Exposed S3 bucket" \
+  --severity high \
+  --description "Markdown description here"
+
+# Create with description from a file (or '-' for stdin)
+tolmo findings create \
+  --title "IAM role misconfiguration" \
+  --severity critical \
+  --description-file ./finding.md \
+  --visibility published \
+  --status open
+
+# Update fields (only specified flags are changed)
+tolmo findings update <findingId> --status in_review
+tolmo findings update <findingId> --severity critical --visibility published
+tolmo findings update <findingId> --description-file ./updated.md
+
+# Delete (requires --yes)
+tolmo findings delete <findingId> --yes
+```
+
+#### Findings field reference
+
+| Flag | Values | Default | Notes |
+|------|--------|---------|-------|
+| `--title` | any string (max 512) | — | Required on create |
+| `--severity` | `critical` `high` `medium` `low` `info` | — | Required on create |
+| `--description` | markdown string | `""` | Mutually exclusive with `--description-file` |
+| `--description-file` | file path or `-` for stdin | — | Mutually exclusive with `--description` |
+| `--visibility` | `draft` `published` | `draft` | `draft` findings are hidden from org members |
+| `--status` | `open` `in_review` `closed` | `open` | |
 
 ### Website data
 
