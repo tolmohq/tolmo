@@ -20,13 +20,13 @@ brew install tolmo@nightly
 ### Install script (macOS / Linux)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tolmohq/tolmo/main/install.sh | sh
+curl -fsSL https://tolmo.com/install.sh | sh
 ```
 
 For nightly builds:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tolmohq/tolmo/main/install.sh | sh -s -- --nightly
+curl -fsSL https://tolmo.com/install.sh | sh -s -- --nightly
 ```
 
 ### Debian / Ubuntu

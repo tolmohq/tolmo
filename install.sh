@@ -1,8 +1,8 @@
 #!/bin/sh
 # Tolmo CLI installer
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/tolmohq/tolmo/main/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/tolmohq/tolmo/main/install.sh | sh -s -- --nightly
+#   curl -fsSL https://tolmo.com/install.sh | sh
+#   curl -fsSL https://tolmo.com/install.sh | sh -s -- --nightly
 set -eu
 
 REPO="tolmohq/tolmo"
