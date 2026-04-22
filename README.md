@@ -115,3 +115,31 @@ Execute a Cypher query against the graph database.
 tolmo cypher "MATCH (n) RETURN labels(n), count(*)"
 tolmo cypher --json "MATCH (n) RETURN n LIMIT 5"
 ```
+
+### `findings`
+
+Manage security findings for the current organization.
+
+```bash
+# Human-readable table output
+tolmo findings list
+
+# Machine-readable output with the full finding UUID
+tolmo findings list --json
+
+# Use the full id value from JSON output for follow-up commands
+tolmo findings get <fullFindingId>
+tolmo findings update <fullFindingId> --status in_review
+tolmo findings delete <fullFindingId> --yes
+```
+
+The table view may show shortened IDs for readability. When you need to call
+`get`, `update`, or `delete`, prefer `tolmo findings list --json` and copy the
+full `id` field.
+
+For example:
+
+```bash
+tolmo findings list --json | jq -r '.[0].id'
+tolmo findings get "$(tolmo findings list --json | jq -r '.[0].id')"
+```

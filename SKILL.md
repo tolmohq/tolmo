@@ -150,6 +150,10 @@ severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
 (`draft`|`published` — org members only see published), and a status
 (`open`|`in_review`|`closed`).
 
+The table output may abbreviate finding IDs for readability. For follow-up
+commands such as `get`, `update`, or `delete`, prefer the full `id` value from
+`tolmo findings list --json`.
+
 ```bash
 # List findings (published only for non-super-admins)
 tolmo findings list
@@ -157,8 +161,11 @@ tolmo findings list --status open --severity critical
 tolmo findings list --json
 
 # Show a single finding (prints markdown description)
-tolmo findings get <findingId>
-tolmo findings get <findingId> --json
+tolmo findings get <fullFindingId>
+tolmo findings get <fullFindingId> --json
+
+# Example: copy the full UUID from JSON output first
+tolmo findings list --json | jq -r '.[0].id'
 
 # Create a finding
 tolmo findings create \
@@ -175,12 +182,12 @@ tolmo findings create \
   --status open
 
 # Update fields (only specified flags are changed)
-tolmo findings update <findingId> --status in_review
-tolmo findings update <findingId> --severity critical --visibility published
-tolmo findings update <findingId> --description-file ./updated.md
+tolmo findings update <fullFindingId> --status in_review
+tolmo findings update <fullFindingId> --severity critical --visibility published
+tolmo findings update <fullFindingId> --description-file ./updated.md
 
 # Delete (requires --yes)
-tolmo findings delete <findingId> --yes
+tolmo findings delete <fullFindingId> --yes
 ```
 
 #### Findings field reference
