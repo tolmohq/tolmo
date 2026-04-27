@@ -111,6 +111,22 @@ tolmo code clone org/repo        # Clone a repository
 tolmo code clone all             # Clone all cloneable repositories
 ```
 
+All of the following forms are accepted by `code clone`:
+
+```bash
+# Short form
+tolmo code clone superset-sh/superset
+
+# github.com prefix
+tolmo code clone github.com/superset-sh/superset
+
+# Full GitHub URL — paste directly from the browser; subdirectory paths are ignored
+tolmo code clone https://github.com/superset-sh/superset/tree/main/apps/relay
+
+# Optional destination directory
+tolmo code clone https://github.com/superset-sh/superset ./relay
+```
+
 ### Query connected services
 
 Credentials are resolved server-side — they never leave the backend.
