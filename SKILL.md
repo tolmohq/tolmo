@@ -210,6 +210,34 @@ tolmo findings delete <findingId> --yes
 | `--visibility` | `draft` `published` | `draft` | `draft` findings are hidden from org members |
 | `--status` | `open` `in_review` `closed` | `open` | |
 
+### Datadog monitors (managed by the platform)
+
+The `monitor` subcommand manages Datadog monitors that the platform owns
+on behalf of the org. The backend decrypts the org's Datadog credentials
+from the CloudAccount + KMS envelope — the CLI never sees them. Every
+monitor created here is stamped with the `managed-by:tolmo` tag, and
+update/delete refuse with HTTP 403 on any monitor that does not carry
+that tag.
+
+```bash
+# Discover what we already manage
+tolmo monitor list --tag managed-by:tolmo --json
+tolmo monitor get 12345 --json
+
+# Create from a JSON spec (stdin or file). Backend always adds
+# `managed-by:tolmo` to the tags before forwarding to Datadog.
+tolmo monitor create -f /tmp/cpu-spec.json
+cat spec.json | tolmo monitor create -f -
+
+# Update / delete: refused unless the live monitor already carries
+# `managed-by:tolmo`. The CLI surfaces the refusal with a clear message.
+tolmo monitor update 12345 -f /tmp/patch.json
+tolmo monitor delete 12345
+
+# Disambiguate when the org has multiple Datadog integrations
+tolmo monitor list --integration <integration-id>
+```
+
 ### Website data
 
 ```bash
