@@ -5,21 +5,21 @@
 class Tolmo < Formula
   desc "CLI for the Tolmo platform"
   homepage "https://github.com/tolmohq/tolmo"
-  version "0.4.4"
+  version "0.5.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4/tolmo_0.4.4_darwin_amd64.tar.gz"
-      sha256 "0e9f0ed4d27090491f2c1ed2661af1edab49a22c17f0d6026edcb58e776641c1"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0/tolmo_0.5.0_darwin_amd64.tar.gz"
+      sha256 "5accf1c6b5ebf872e79d9d71dd9ed0991b038384a0160f69b615e97732feb0af"
 
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4/tolmo_0.4.4_darwin_arm64.tar.gz"
-      sha256 "b5e643e208f9fb832108099b9757271f1f0e70ad2fc5405b146da5a2b32bbd7c"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0/tolmo_0.5.0_darwin_arm64.tar.gz"
+      sha256 "0c7a6e1f68854d623d96b003a9bd94b7493427067f687babc9647953e0adba55"
 
       define_method(:install) do
         bin.install "tolmo"
@@ -29,19 +29,32 @@ class Tolmo < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4/tolmo_0.4.4_linux_amd64.tar.gz"
-      sha256 "c75fc5a17bdd2202170799b6293a3641d7221354fb9edaaed24db3792bd05d43"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0/tolmo_0.5.0_linux_amd64.tar.gz"
+      sha256 "ba2fc17c380cd7bd363ec02198ef80b90153a26e3960e3a3733b60ed943b2d23"
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4/tolmo_0.4.4_linux_arm64.tar.gz"
-      sha256 "16f0adb31b471a92dd87479f6c63d1ce917bd767192bb054946aed3d7819d7ea"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0/tolmo_0.5.0_linux_arm64.tar.gz"
+      sha256 "136885dda3d9e5dd99854e4a6ff09b0d6c7f2d069169caad17bebcf58583515f"
       define_method(:install) do
         bin.install "tolmo"
       end
     end
+  end
+
+  def caveats
+    <<~EOS
+      Tolmo does not install agent skills automatically.
+
+      To install or update the embedded Tolmo skill with explicit consent, run:
+        tolmo skill install
+
+      Tolmo will install the skill into:
+        ~/.claude/skills/tolmo
+        ~/.agents/skills/tolmo
+    EOS
   end
 
   test do
