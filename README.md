@@ -11,6 +11,16 @@ brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo
 brew install tolmo
 ```
 
+The Homebrew formula installs the CLI only. It does not modify Claude Code or
+other coding-agent directories during `brew install`.
+
+Install the Tolmo skill explicitly when you want it:
+
+```bash
+tolmo skill install
+tolmo skill status
+```
+
 Nightly builds:
 
 ```bash
