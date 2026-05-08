@@ -5,21 +5,21 @@
 class TolmoNightly < Formula
   desc "Nightly CLI for the Tolmo platform"
   homepage "https://github.com/tolmohq/tolmo"
-  version "0.4.4-nightly.20260507060246.bf908e8e"
+  version "0.5.0-nightly.20260508054223.39b1a8c5"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4-nightly.20260507060246.bf908e8e/tolmo-nightly_0.4.4-nightly.20260507060246.bf908e8e_darwin_amd64.tar.gz"
-      sha256 "6396682584c3aee5b3e43225d63d8d54181ecd92e6b9387bac997cab12ed2170"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0-nightly.20260508054223.39b1a8c5/tolmo-nightly_0.5.0-nightly.20260508054223.39b1a8c5_darwin_amd64.tar.gz"
+      sha256 "77b22603567b3b65acbb941f80d8e40b6b63e0dfaf3a37b3149eb15759c16b2c"
 
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4-nightly.20260507060246.bf908e8e/tolmo-nightly_0.4.4-nightly.20260507060246.bf908e8e_darwin_arm64.tar.gz"
-      sha256 "ce8cc9abb447fec6e4d5468d8d498c6f9aa3a526eb5affadfe48466f7f4c94d8"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0-nightly.20260508054223.39b1a8c5/tolmo-nightly_0.5.0-nightly.20260508054223.39b1a8c5_darwin_arm64.tar.gz"
+      sha256 "7e892c685150cfd31bc380522bb1f2a15614023bb38b3cb8047ad44b79995d53"
 
       define_method(:install) do
         bin.install "tolmo"
@@ -29,19 +29,32 @@ class TolmoNightly < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4-nightly.20260507060246.bf908e8e/tolmo-nightly_0.4.4-nightly.20260507060246.bf908e8e_linux_amd64.tar.gz"
-      sha256 "c1008446f365b0c2ad510672a16c62f1fa139b1723e31715d7be2bd69e597b49"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0-nightly.20260508054223.39b1a8c5/tolmo-nightly_0.5.0-nightly.20260508054223.39b1a8c5_linux_amd64.tar.gz"
+      sha256 "9fc2d6e532d2c3e6c72dcfb8369c985a64291b2f3958e4345ae69a977f5f6d20"
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.4.4-nightly.20260507060246.bf908e8e/tolmo-nightly_0.4.4-nightly.20260507060246.bf908e8e_linux_arm64.tar.gz"
-      sha256 "1b03147cdb3238ee6a6e87bbed65dd30ffced00c69d9a955f4d6d92197a52c0d"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.5.0-nightly.20260508054223.39b1a8c5/tolmo-nightly_0.5.0-nightly.20260508054223.39b1a8c5_linux_arm64.tar.gz"
+      sha256 "8df44485cc6e657618147d2bea81827d6ecc9b56e33e8b3f38c1859f24b310a7"
       define_method(:install) do
         bin.install "tolmo"
       end
     end
+  end
+
+  def caveats
+    <<~EOS
+      Tolmo does not install agent skills automatically.
+
+      To install or update the embedded Tolmo skill with explicit consent, run:
+        tolmo skill install
+
+      Tolmo will install the skill into:
+        ~/.claude/skills/tolmo
+        ~/.agents/skills/tolmo
+    EOS
   end
 
   test do
