@@ -1,8 +1,8 @@
 ---
 name: tolmo
 description: |
-  Install and use the Tolmo CLI to query infrastructure graphs, run SQL/Cypher
-  queries, proxy requests to connected services (AWS, Linear, Sentry, Datadog),
+  Use the Tolmo CLI to query infrastructure graphs, run SQL/Cypher queries,
+  proxy requests to connected services (AWS, GitHub, Linear, Sentry, Datadog),
   manage code repositories, and create/manage security findings.
 ---
 
@@ -10,46 +10,24 @@ description: |
 
 ## Installation
 
-### Homebrew (macOS / Linux)
-
 ```bash
+# Homebrew (macOS / Linux)
 brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo
 brew install tolmo
 
-# Or nightly builds:
-brew install tolmo@nightly
-```
-
-### Install script (macOS / Linux)
-
-```bash
-# Stable
+# Install script
 curl -fsSL https://tolmo.com/install.sh | sh
 
-# Nightly
-curl -fsSL https://tolmo.com/install.sh | sh -s -- --nightly
-```
-
-### Debian / Ubuntu
-
-Download the `.deb` package from the
-[latest release](https://github.com/tolmohq/tolmo/releases/latest) and install:
-
-```bash
+# Debian / Ubuntu
 sudo dpkg -i tolmo_<version>_<arch>.deb
 ```
 
 ## Authentication
 
 ```bash
-# Interactive login (opens browser)
-tolmo auth login
-
-# Check current session
-tolmo auth status
-
-# Logout
-tolmo auth logout
+tolmo auth login                 # Interactive login (opens browser)
+tolmo auth status                # Check current session
+tolmo auth logout                # Logout
 ```
 
 ### Environment variables (CI / automation)
@@ -63,12 +41,17 @@ tolmo auth logout
 ### Named profiles
 
 ```bash
-# Login to a specific profile
 tolmo auth login --profile staging --api-url https://api.staging.example.com
-
-# Use a profile for a single command
 tolmo --profile staging sql "SELECT 1"
 ```
+
+## Global flags
+
+| Flag | Description |
+|------|-------------|
+| `--org <slug>` | Override the active organization for a single command |
+| `--profile <name>` | Use a named profile (default: `TOLMO_PROFILE` env or `default`) |
+| `--json` | Output raw JSON (available on most commands) |
 
 ## Commands
 
@@ -109,35 +92,36 @@ tolmo code list                  # List repositories
 tolmo code list --cloneable      # Only repos available for cloning
 tolmo code clone org/repo        # Clone a repository
 tolmo code clone all             # Clone all cloneable repositories
+tolmo code clone all --yes       # Clone all without confirmation prompt
 ```
 
-All of the following forms are accepted by `code clone`:
+`code clone` accepts multiple input forms (GitHub and GitLab):
 
 ```bash
-# Short form
 tolmo code clone superset-sh/superset
-
-# github.com prefix
 tolmo code clone github.com/superset-sh/superset
-
-# Full GitHub URL — paste directly from the browser; subdirectory paths are ignored
 tolmo code clone https://github.com/superset-sh/superset/tree/main/apps/relay
-
-# Optional destination directory
 tolmo code clone https://github.com/superset-sh/superset ./relay
+tolmo code clone https://gitlab.com/group/subgroup/repo
+tolmo code clone group/subgroup/repo --provider gitlab
 ```
 
 ### Query connected services
 
 Credentials are resolved server-side — they never leave the backend.
+Use `tolmo query list` to discover available providers for an org.
 
 ```bash
-tolmo query list                 # List available connected services
+tolmo query list                           # List available connected services
+tolmo query list --org superset            # List for a different org
+```
 
-# AWS
-tolmo query aws ec2 describe-instances
-tolmo query aws s3 ls
-tolmo query aws iam list-roles
+#### REST and GraphQL providers (direct proxy)
+
+```bash
+# GitHub REST (proxied through the backend)
+tolmo query github /repos/owner/repo/pulls?state=all
+tolmo query github /search/issues?q=type:pr+org:myorg
 
 # Linear (GraphQL)
 tolmo query linear '{ viewer { id name } }'
@@ -148,6 +132,46 @@ tolmo query sentry /api/0/organizations/acme/issues/
 
 # Datadog (REST)
 tolmo query datadog /api/v1/monitors
+```
+
+When an org has multiple integrations for the same provider, pass
+`--integration <id>` to disambiguate (IDs are shown by `query list`).
+
+#### GitHub CLI passthrough (`tolmo query -- gh ...`)
+
+Runs the local `gh` CLI with a short-lived token injected by the backend
+via a Unix socket proxy. This gives you the full `gh` CLI feature set
+(pagination, `--jq`, `--template`, etc.) using the org's GitHub App
+credentials. The `--` separator is **required** so that `gh` flags pass
+through unchanged.
+
+```bash
+# List repos
+tolmo query -- gh repo list myorg --limit 50
+
+# Search PRs (full gh api syntax)
+tolmo query -- gh api search/issues -f "q=type:pr org:myorg created:2026-01-01..2026-03-01" -f per_page=100
+
+# Issues with pagination
+tolmo query -- gh issue list --repo myorg/myrepo --state open --json number,title
+
+# Use a different org's credentials
+tolmo query --org superset -- gh api /repos/superset-sh/superset/pulls?state=all&per_page=5
+
+# Disambiguate when multiple GitHub integrations exist
+tolmo query --integration <id> -- gh repo list
+```
+
+#### AWS CLI passthrough (`tolmo query -- aws ...`)
+
+Uses the local AWS CLI with requests proxied through the backend for
+credential injection. The `--` separator is **required**.
+
+```bash
+tolmo query -- aws ec2 describe-instances
+tolmo query -- aws s3 ls
+tolmo query -- aws iam list-roles --region us-east-1
+tolmo query --org klarify -- aws ec2 describe-security-groups --region ca-central-1
 ```
 
 ### Threat model artifacts
@@ -164,13 +188,16 @@ tolmo threat-model get --step vuln-qualif  # Download single step
 Manage security findings for the current organization. Findings have a
 severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
 (`draft`|`published` — org members only see published), and a status
-(`open`|`in_review`|`closed`).
+(`open`|`in_review`|`closed`|`acknowledged`|`false-positive`).
+
+Finding IDs support prefix matching — the short IDs shown by `list`
+(first 8 chars) work in all commands.
 
 ```bash
 # List findings (published only for non-super-admins)
 tolmo findings list
 tolmo findings list --status open --severity critical
-tolmo findings list --json
+tolmo findings list --visibility draft --json
 
 # Show a single finding (prints markdown description)
 tolmo findings get <findingId>
@@ -191,9 +218,17 @@ tolmo findings create \
   --status open
 
 # Update fields (only specified flags are changed)
-tolmo findings update <findingId> --status in_review
 tolmo findings update <findingId> --severity critical --visibility published
 tolmo findings update <findingId> --description-file ./updated.md
+
+# Transition status (dedicated endpoint — only changes status)
+tolmo findings status <findingId> in_review
+tolmo findings status <findingId> closed
+tolmo findings status <findingId> acknowledged
+tolmo findings status <findingId> false-positive
+
+# View status change audit trail
+tolmo findings history <findingId>
 
 # Delete (requires --yes)
 tolmo findings delete <findingId> --yes
@@ -208,7 +243,7 @@ tolmo findings delete <findingId> --yes
 | `--description` | markdown string | `""` | Mutually exclusive with `--description-file` |
 | `--description-file` | file path or `-` for stdin | — | Mutually exclusive with `--description` |
 | `--visibility` | `draft` `published` | `draft` | `draft` findings are hidden from org members |
-| `--status` | `open` `in_review` `closed` | `open` | |
+| `--status` | `open` `in_review` `closed` `acknowledged` `false-positive` | `open` | |
 
 ### Datadog monitors (managed by the platform)
 
@@ -252,6 +287,29 @@ tolmo org list                   # List organizations
 tolmo org switch <slug>          # Switch active organization
 ```
 
+### Setup (OTEL telemetry for Claude Code)
+
+Configures Claude Code to emit OTEL telemetry (tool calls, assistant
+messages) to the Tolmo ingest pipeline. Writes env vars and hooks to
+`~/.claude/settings.json`.
+
+```bash
+tolmo setup claude-code                      # Enable telemetry for current org
+tolmo setup claude-code --disable            # Remove OTEL configuration
+tolmo setup claude-code --otel-endpoint URL  # Override default endpoint
+```
+
+### Skill management
+
+The CLI embeds a SKILL.md file that can be installed to
+`~/.claude/skills/tolmo/SKILL.md` and `~/.agents/skills/tolmo/SKILL.md`
+so Claude Code and other agents can discover the CLI's capabilities.
+
+```bash
+tolmo skill install              # Install or update the skill
+tolmo skill status               # Check installation state
+```
+
 ## Rules for automation
 
 - Always use `--json` for machine-readable output when parsing results
@@ -261,3 +319,6 @@ tolmo org switch <slug>          # Switch active organization
   pipelines instead of interactive login.
 - All `query` subcommands proxy through the backend — providers are discovered
   dynamically, so new backend adapters work without a CLI update.
+- For `query -- gh` and `query -- aws`, the `--` separator is mandatory.
+  Without it, cobra strips unknown flags (like `--region`, `--repo`) before
+  they reach the underlying CLI.
