@@ -18,6 +18,9 @@ brew install tolmo
 # Install script
 curl -fsSL https://tolmo.com/install.sh | sh
 
+# install.sh uses a writable user install directory by default on macOS/Linux.
+# Set TOLMO_INSTALL_DIR to choose a specific target directory.
+
 # Debian / Ubuntu
 sudo dpkg -i tolmo_<version>_<arch>.deb
 ```
@@ -193,6 +196,14 @@ severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
 Finding IDs support prefix matching — the short IDs shown by `list`
 (first 8 chars) work in all commands.
 
+> **Formatting the description body:** the markdown passed to
+> `--description` / `--description-file` (and edited via
+> `findings update`) is what dev/CTO customers actually read. Before
+> writing or editing one, follow the `tolmo-finding-format` skill — it
+> defines the required TL;DR block, section headers, linked-artifact
+> rules, and recommendation shape. `tolmo skill install` ships it
+> alongside this one (see "Skill installation" below).
+
 ```bash
 # List findings (published only for non-super-admins)
 tolmo findings list
@@ -301,13 +312,23 @@ tolmo setup claude-code --otel-endpoint URL  # Override default endpoint
 
 ### Skill management
 
-The CLI embeds a SKILL.md file that can be installed to
-`~/.claude/skills/tolmo/SKILL.md` and `~/.agents/skills/tolmo/SKILL.md`
-so Claude Code and other agents can discover the CLI's capabilities.
+The CLI embeds two SKILL.md files and writes them to the user-level
+Claude / agent skill directories so Claude Code and other agents can
+auto-load them:
+
+- `tolmo` — this file. Covers the CLI surface (queries, repos, findings,
+  threat-model, integrations).
+- `tolmo-finding-format` — the markdown shape (TL;DR, headers, linked
+  artifacts, recommendation) expected for the `description` body of a
+  finding. Loads only when Claude is authoring or editing a finding,
+  keeping its 100+ lines out of normal CLI context.
+
+Both skills are written to `~/.claude/skills/<name>/SKILL.md` and
+`~/.agents/skills/<name>/SKILL.md`.
 
 ```bash
-tolmo skill install              # Install or update the skill
-tolmo skill status               # Check installation state
+tolmo skill install              # Install or update both skills
+tolmo skill status               # Check installation state of both
 ```
 
 ## Rules for automation

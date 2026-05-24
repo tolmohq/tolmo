@@ -6,7 +6,8 @@
 set -eu
 
 REPO="tolmohq/tolmo"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="${TOLMO_INSTALL_DIR:-}"
+SYSTEM_BIN_DIR="${TOLMO_SYSTEM_BIN_DIR:-/usr/local/bin}"
 NIGHTLY=false
 
 for arg in "$@"; do
@@ -15,6 +16,9 @@ for arg in "$@"; do
     --help|-h)
       echo "Usage: install.sh [--nightly]"
       echo "  --nightly  Install the latest nightly pre-release"
+      echo ""
+      echo "Environment:"
+      echo "  TOLMO_INSTALL_DIR  Install directory override"
       exit 0
       ;;
   esac
@@ -46,8 +50,54 @@ has_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
-is_debian_based() {
-  has_cmd dpkg && has_cmd apt-get
+default_install_dir() {
+  if [ -d "$SYSTEM_BIN_DIR" ] && [ -w "$SYSTEM_BIN_DIR" ]; then
+    echo "$SYSTEM_BIN_DIR"
+    return 0
+  fi
+
+  if [ -z "${HOME:-}" ]; then
+    echo "Error: HOME is unset; set TOLMO_INSTALL_DIR to a writable directory" \
+      >&2
+    return 1
+  fi
+
+  echo "${HOME}/.local/bin"
+  return 0
+}
+
+path_contains() {
+  case ":${PATH:-}:" in
+    *":$1:"*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+INSTALL_TMP=""
+
+install_binary() {
+  local source="$1"
+  local target="$2"
+  local target_tmp="${target}.tmp.$$"
+
+  if [ -d "$target" ]; then
+    echo "Error: ${target} is a directory" >&2
+    return 1
+  fi
+
+  # Sweep stale temp files from prior SIGKILL/OOM-killed runs.
+  rm -f "${target}.tmp."* 2>/dev/null || true
+
+  INSTALL_TMP="$target_tmp"
+  cp "$source" "$target_tmp"
+  chmod +x "$target_tmp"
+  mv -f "$target_tmp" "$target" 2>/dev/null || {
+    rm -f "$target_tmp" 2>/dev/null || true
+    INSTALL_TMP=""
+    echo "Error: ${target} could not be replaced" >&2
+    return 1
+  }
+  INSTALL_TMP=""
 }
 
 verify_checksum() {
@@ -81,6 +131,10 @@ verify_checksum() {
 
 OS="$(detect_os)"
 ARCH="$(detect_arch)"
+
+if [ -z "$INSTALL_DIR" ]; then
+  INSTALL_DIR="$(default_install_dir)" || exit 1
+fi
 
 # Detect Rosetta 2: if running as x86_64 under translation on ARM Mac,
 # download the native arm64 binary instead
@@ -136,36 +190,12 @@ fi
 echo "Installing tolmo ${TAG}..."
 
 TMPDIR="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR"' EXIT
+trap 'rm -rf "$TMPDIR"; if [ -n "$INSTALL_TMP" ]; then rm -f "$INSTALL_TMP"; fi' EXIT
 
 # Download checksums
 CHECKSUMS_URL="https://github.com/${REPO}/releases/download/${TAG}/checksums.txt"
 curl -fsSL -o "${TMPDIR}/checksums.txt" "$CHECKSUMS_URL" 2>/dev/null || true
 
-# On Debian/Ubuntu with .deb available, use dpkg
-if [ "$OS" = "linux" ] && is_debian_based; then
-  if [ "$NIGHTLY" = true ]; then
-    DEB_NAME="tolmo-nightly_${VERSION}_${OS}_${ARCH}.deb"
-  else
-    DEB_NAME="tolmo_${VERSION}_${OS}_${ARCH}.deb"
-  fi
-  DEB_URL="https://github.com/${REPO}/releases/download/${TAG}/${DEB_NAME}"
-
-  echo "Downloading ${DEB_NAME}..."
-  curl -fsSL -o "${TMPDIR}/${DEB_NAME}" "$DEB_URL"
-
-  EXPECTED="$(grep "${DEB_NAME}$" "${TMPDIR}/checksums.txt" 2>/dev/null | cut -d' ' -f1 || true)"
-  verify_checksum "${TMPDIR}/${DEB_NAME}" "$EXPECTED"
-
-  echo "Installing .deb package (requires sudo)..."
-  sudo dpkg -i "${TMPDIR}/${DEB_NAME}"
-
-  echo "Installed successfully!"
-  tolmo --version
-  exit 0
-fi
-
-# Otherwise, use tarball
 ARCHIVE_NAME="${ARCHIVE_PREFIX}_${VERSION}_${OS}_${ARCH}.tar.gz"
 ARCHIVE_URL="https://github.com/${REPO}/releases/download/${TAG}/${ARCHIVE_NAME}"
 
@@ -179,14 +209,27 @@ echo "Extracting..."
 tar -xzf "${TMPDIR}/${ARCHIVE_NAME}" -C "$TMPDIR"
 
 # Install binary
+if ! mkdir -p "$INSTALL_DIR" 2>/dev/null; then
+  echo "Error: could not create ${INSTALL_DIR}." >&2
+  echo "Set TOLMO_INSTALL_DIR to a writable directory and rerun install.sh." \
+    >&2
+  exit 1
+fi
 if [ -w "$INSTALL_DIR" ]; then
-  cp "${TMPDIR}/tolmo" "${INSTALL_DIR}/tolmo"
-  chmod +x "${INSTALL_DIR}/tolmo"
+  echo "Installing to ${INSTALL_DIR}..."
+  install_binary "${TMPDIR}/tolmo" "${INSTALL_DIR}/tolmo"
 else
-  echo "Installing to ${INSTALL_DIR} (requires sudo)..."
-  sudo cp "${TMPDIR}/tolmo" "${INSTALL_DIR}/tolmo"
-  sudo chmod +x "${INSTALL_DIR}/tolmo"
+  echo "Error: ${INSTALL_DIR} is not writable." >&2
+  echo "Set TOLMO_INSTALL_DIR to a writable directory and rerun install.sh." \
+    >&2
+  exit 1
 fi
 
 echo "Installed successfully!"
 "${INSTALL_DIR}/tolmo" --version
+
+if ! path_contains "$INSTALL_DIR"; then
+  echo ""
+  echo "Add tolmo to your PATH:"
+  echo "  export PATH=\"${INSTALL_DIR}:\$PATH\""
+fi

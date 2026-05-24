@@ -33,6 +33,10 @@ brew install tolmo@nightly
 curl -fsSL https://tolmo.com/install.sh | sh
 ```
 
+The install script uses a writable user install directory when
+`/usr/local/bin` is not writable, so the default macOS/Linux flow does not
+require sudo. Set `TOLMO_INSTALL_DIR` to choose a different target directory.
+
 For nightly builds:
 
 ```bash
