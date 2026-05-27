@@ -20,9 +20,6 @@ curl -fsSL https://tolmo.com/install.sh | sh
 
 # install.sh uses a writable user install directory by default on macOS/Linux.
 # Set TOLMO_INSTALL_DIR to choose a specific target directory.
-
-# Debian / Ubuntu
-sudo dpkg -i tolmo_<version>_<arch>.deb
 ```
 
 ## Authentication
