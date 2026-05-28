@@ -307,11 +307,9 @@ tolmo setup claude-code --otel-endpoint URL  # Override default endpoint
 
 ### Skill management
 
-`tolmo skill install` installs only the general Tolmo CLI skill into the
-user-level Claude / agent skill directories:
-
-- `tolmo` — this file. Covers the CLI surface (queries, repos, findings,
-  threat-model, integrations).
+`tolmo skill install` installs the Tolmo CLI skill — this file, covering the
+CLI surface (queries, repos, findings, threat-model, integrations) — into the
+user-level Claude / agent skill directories.
 
 The CLI skill is written to `~/.claude/skills/tolmo/SKILL.md` and
 `~/.agents/skills/tolmo/SKILL.md`.
