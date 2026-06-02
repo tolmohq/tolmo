@@ -5,21 +5,21 @@
 class Tolmo < Formula
   desc "CLI for the Tolmo platform"
   homepage "https://github.com/tolmohq/tolmo"
-  version "0.8.0"
+  version "0.8.1"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.0/tolmo_0.8.0_darwin_amd64.tar.gz"
-      sha256 "a755c371c75d4cf5422b9e620319d37c8c3024127bf28353618de865c3adacb2"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.1/tolmo_0.8.1_darwin_amd64.tar.gz"
+      sha256 "29f0845efc4e2b79bb1c6b8972ac4e8a75d2df4cf703d0a02dadaa187e9ed3e0"
 
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.0/tolmo_0.8.0_darwin_arm64.tar.gz"
-      sha256 "7a8f32d14557e26833ed37931485cda161567ec2053eae41d12e6b25d742329b"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.1/tolmo_0.8.1_darwin_arm64.tar.gz"
+      sha256 "db1cbc7e7559d1fdc8d2c3c144bfdd170514d59de34619674338ba18c2a8c0ef"
 
       define_method(:install) do
         bin.install "tolmo"
@@ -29,15 +29,15 @@ class Tolmo < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.0/tolmo_0.8.0_linux_amd64.tar.gz"
-      sha256 "5fbc1c73a01a1639f584aa985b45aceb8176f1d047cae7b5f9fb128f6076fcec"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.1/tolmo_0.8.1_linux_amd64.tar.gz"
+      sha256 "6fee806dbfb2eae24e8e72047cef49549c53e09a08cbc266f91ab2a0fab4dbaf"
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.0/tolmo_0.8.0_linux_arm64.tar.gz"
-      sha256 "382a6cd4e1eacbe47abea0c58c13236d17e81c368ef41382c5bc056fd9d46357"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.8.1/tolmo_0.8.1_linux_arm64.tar.gz"
+      sha256 "eccc56ba73727891303fbcc4207b96add35909578e0c755acae4fb4d14503928"
       define_method(:install) do
         bin.install "tolmo"
       end
