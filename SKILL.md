@@ -187,11 +187,13 @@ tolmo threat-model get --step vuln-qualif  # Download single step
 
 Manage security findings for the current organization. Findings have a
 severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
-(`draft`|`published` — org members only see published), and a status
-(`open`|`in_review`|`closed`|`acknowledged`|`false-positive`).
+(`draft`|`published`), and a status (`open`|`in_review`|`closed`|
+`acknowledged`|`false-positive`).
 
 Finding IDs support prefix matching — the short IDs shown by `list`
-(first 8 chars) work in all commands.
+(first 8 chars) work in all commands. `findings list` returns published
+findings by default; pass `--include-drafts` when you also need in-flight
+draft findings.
 
 > **Formatting the description body:** the markdown passed to
 > `--description` / `--description-file` (and edited via
@@ -200,10 +202,10 @@ Finding IDs support prefix matching — the short IDs shown by `list`
 > impact, and next action.
 
 ```bash
-# List findings (published only for non-super-admins)
+# List findings (published by default; opt in to include drafts too)
 tolmo findings list
 tolmo findings list --status open --severity critical
-tolmo findings list --visibility draft --json
+tolmo findings list --include-drafts --json
 
 # Show a single finding (prints markdown description)
 tolmo findings get <findingId>
@@ -248,7 +250,8 @@ tolmo findings delete <findingId> --yes
 | `--severity` | `critical` `high` `medium` `low` `info` | — | Required on create |
 | `--description` | markdown string | `""` | Mutually exclusive with `--description-file` |
 | `--description-file` | file path or `-` for stdin | — | Mutually exclusive with `--description` |
-| `--visibility` | `draft` `published` | `draft` | `draft` findings are hidden from org members |
+| `--include-drafts` | boolean | `false` | List-only; returns draft findings alongside published findings |
+| `--visibility` | `draft` `published` | `draft` | Create/update-only; controls the finding publication state |
 | `--status` | `open` `in_review` `closed` `acknowledged` `false-positive` | `open` | |
 
 ### Datadog monitors (managed by the platform)
@@ -291,18 +294,6 @@ tolmo website scans              # List scan history
 ```bash
 tolmo org list                   # List organizations
 tolmo org switch <slug>          # Switch active organization
-```
-
-### Setup (OTEL telemetry for Claude Code)
-
-Configures Claude Code to emit OTEL telemetry (tool calls, assistant
-messages) to the Tolmo ingest pipeline. Writes env vars and hooks to
-`~/.claude/settings.json`.
-
-```bash
-tolmo setup claude-code                      # Enable telemetry for current org
-tolmo setup claude-code --disable            # Remove OTEL configuration
-tolmo setup claude-code --otel-endpoint URL  # Override default endpoint
 ```
 
 ### Skill management

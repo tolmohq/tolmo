@@ -110,6 +110,7 @@ Clone a repository from storage.
 ```bash
 tolmo code clone org/repo
 tolmo code clone github.com/org/repo
+tolmo code clone --github-pull-request 123 --ref <head-sha> --cloud-account-id <integration-id> org/repo
 ```
 
 ### `sql`
