@@ -192,7 +192,7 @@ severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
 
 Finding IDs support prefix matching — the short IDs shown by `list`
 (first 8 chars) work in all commands. `findings list` returns published
-findings by default; pass `--include-drafts` when you also need in-flight
+findings by default; pass `--include drafts` when you also need in-flight
 draft findings.
 
 > **Formatting the description body:** the markdown passed to
@@ -205,7 +205,7 @@ draft findings.
 # List findings (published by default; opt in to include drafts too)
 tolmo findings list
 tolmo findings list --status open --severity critical
-tolmo findings list --include-drafts --json
+tolmo findings list --include drafts --json
 
 # Show a single finding (prints markdown description)
 tolmo findings get <findingId>
@@ -250,7 +250,7 @@ tolmo findings delete <findingId> --yes
 | `--severity` | `critical` `high` `medium` `low` `info` | — | Required on create |
 | `--description` | markdown string | `""` | Mutually exclusive with `--description-file` |
 | `--description-file` | file path or `-` for stdin | — | Mutually exclusive with `--description` |
-| `--include-drafts` | boolean | `false` | List-only; returns draft findings alongside published findings |
+| `--include` | `drafts` | — | List-only; returns draft findings alongside published findings |
 | `--visibility` | `draft` `published` | `draft` | Create/update-only; controls the finding publication state |
 | `--status` | `open` `in_review` `closed` `acknowledged` `false-positive` | `open` | |
 
