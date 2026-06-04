@@ -105,8 +105,8 @@ verify_checksum() {
   local expected="$2"
 
   if [ -z "$expected" ]; then
-    echo "Warning: checksum not found, skipping verification" >&2
-    return 0
+    echo "Error: expected checksum is empty — checksums.txt is missing or does not list this archive" >&2
+    return 1
   fi
 
   local actual
@@ -115,8 +115,9 @@ verify_checksum() {
   elif has_cmd shasum; then
     actual="$(shasum -a 256 "$file" | cut -d' ' -f1)"
   else
-    echo "Warning: no sha256sum or shasum available, skipping verification" >&2
-    return 0
+    echo "Error: no sha256sum or shasum found — cannot verify binary integrity" >&2
+    echo "Install coreutils (Linux) or the Xcode Command Line Tools (macOS) and retry." >&2
+    return 1
   fi
 
   if [ "$actual" != "$expected" ]; then
@@ -192,9 +193,17 @@ echo "Installing tolmo ${TAG}..."
 TMPDIR="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR"; if [ -n "$INSTALL_TMP" ]; then rm -f "$INSTALL_TMP"; fi' EXIT
 
-# Download checksums
+# Download checksums — fail hard if unavailable; an absent file must not be
+# silently treated as "no verification needed" (that is the attack surface).
 CHECKSUMS_URL="https://github.com/${REPO}/releases/download/${TAG}/checksums.txt"
-curl -fsSL -o "${TMPDIR}/checksums.txt" "$CHECKSUMS_URL" 2>/dev/null || true
+if ! curl -fsSL -o "${TMPDIR}/checksums.txt" "$CHECKSUMS_URL"; then
+  echo "Error: failed to download checksums.txt from ${CHECKSUMS_URL}" >&2
+  exit 1
+fi
+if [ ! -s "${TMPDIR}/checksums.txt" ]; then
+  echo "Error: checksums.txt is empty" >&2
+  exit 1
+fi
 
 ARCHIVE_NAME="${ARCHIVE_PREFIX}_${VERSION}_${OS}_${ARCH}.tar.gz"
 ARCHIVE_URL="https://github.com/${REPO}/releases/download/${TAG}/${ARCHIVE_NAME}"
@@ -202,7 +211,7 @@ ARCHIVE_URL="https://github.com/${REPO}/releases/download/${TAG}/${ARCHIVE_NAME}
 echo "Downloading ${ARCHIVE_NAME}..."
 curl -fsSL -o "${TMPDIR}/${ARCHIVE_NAME}" "$ARCHIVE_URL"
 
-EXPECTED="$(grep "${ARCHIVE_NAME}$" "${TMPDIR}/checksums.txt" 2>/dev/null | cut -d' ' -f1 || true)"
+EXPECTED="$(grep "${ARCHIVE_NAME}$" "${TMPDIR}/checksums.txt" | cut -d' ' -f1)"
 verify_checksum "${TMPDIR}/${ARCHIVE_NAME}" "$EXPECTED"
 
 echo "Extracting..."
