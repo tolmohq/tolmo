@@ -5,21 +5,21 @@
 class TolmoNightly < Formula
   desc "Nightly CLI for the Tolmo platform"
   homepage "https://github.com/tolmohq/tolmo"
-  version "0.10.0-nightly.20260604063252.dfe51aef"
+  version "0.10.1-nightly.20260605063028.eef4dc01"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.0-nightly.20260604063252.dfe51aef/tolmo-nightly_0.10.0-nightly.20260604063252.dfe51aef_darwin_amd64.tar.gz"
-      sha256 "9b2fd3040676752f839607ef10fd8c58e321b41a0a6e89008a813686b54a1e9e"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.1-nightly.20260605063028.eef4dc01/tolmo-nightly_0.10.1-nightly.20260605063028.eef4dc01_darwin_amd64.tar.gz"
+      sha256 "44e54ef12babfc511ed238d3756ed2fd36ed5729fcfc017ee829a65ea6068f77"
 
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.0-nightly.20260604063252.dfe51aef/tolmo-nightly_0.10.0-nightly.20260604063252.dfe51aef_darwin_arm64.tar.gz"
-      sha256 "97f1e4098ce6d4735d12decd54e05e42ce810a059c74a73bc13eecc18d75a906"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.1-nightly.20260605063028.eef4dc01/tolmo-nightly_0.10.1-nightly.20260605063028.eef4dc01_darwin_arm64.tar.gz"
+      sha256 "b3bf0eef0d00724335b545fed274b85cf64574d764d0e7cba90358dadc13af28"
 
       define_method(:install) do
         bin.install "tolmo"
@@ -29,15 +29,15 @@ class TolmoNightly < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.0-nightly.20260604063252.dfe51aef/tolmo-nightly_0.10.0-nightly.20260604063252.dfe51aef_linux_amd64.tar.gz"
-      sha256 "a84a0789a2e6d3e06fd92486f479dad9340ae8a507a3b4b9ccd532c5c4b0ed03"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.1-nightly.20260605063028.eef4dc01/tolmo-nightly_0.10.1-nightly.20260605063028.eef4dc01_linux_amd64.tar.gz"
+      sha256 "53aae4428c0797ec7f1693a47826c6f7f932ebb105cd8a0776d1853a96cd5080"
       define_method(:install) do
         bin.install "tolmo"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.0-nightly.20260604063252.dfe51aef/tolmo-nightly_0.10.0-nightly.20260604063252.dfe51aef_linux_arm64.tar.gz"
-      sha256 "bf2ffd984aeb2f5bd9a981d1c689660fb187b14772b9f35f10f527ddba5f0b53"
+      url "https://github.com/tolmohq/tolmo/releases/download/v0.10.1-nightly.20260605063028.eef4dc01/tolmo-nightly_0.10.1-nightly.20260605063028.eef4dc01_linux_arm64.tar.gz"
+      sha256 "4fbc4e38ba5864b9a790e0634f4d69f87dfac871051aaac637885c2e37a430d1"
       define_method(:install) do
         bin.install "tolmo"
       end
