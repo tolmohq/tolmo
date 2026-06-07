@@ -188,7 +188,7 @@ tolmo threat-model get --step vuln-qualif  # Download single step
 Manage security findings for the current organization. Findings have a
 severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
 (`draft`|`published`), and a status (`open`|`in_review`|`closed`|
-`acknowledged`|`false-positive`).
+`acknowledged`|`false_positive`).
 
 Finding IDs support prefix matching — the short IDs shown by `list`
 (first 8 chars) work in all commands. `findings list` returns published
@@ -233,7 +233,7 @@ tolmo findings update <findingId> --description-file ./updated.md
 tolmo findings status <findingId> in_review
 tolmo findings status <findingId> closed
 tolmo findings status <findingId> acknowledged
-tolmo findings status <findingId> false-positive
+tolmo findings status <findingId> false_positive
 
 # View status change audit trail
 tolmo findings history <findingId>
@@ -252,7 +252,7 @@ tolmo findings delete <findingId> --yes
 | `--description-file` | file path or `-` for stdin | — | Mutually exclusive with `--description` |
 | `--include` | `drafts` | — | List-only; returns draft findings alongside published findings |
 | `--visibility` | `draft` `published` | `draft` | Create/update-only; controls the finding publication state |
-| `--status` | `open` `in_review` `closed` `acknowledged` `false-positive` | `open` | |
+| `--status` | `open` `in_review` `closed` `acknowledged` `false_positive` | `open` | |
 
 ### Datadog monitors (managed by the platform)
 
