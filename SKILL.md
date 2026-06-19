@@ -289,6 +289,32 @@ tolmo website list               # List crawled domains
 tolmo website scans              # List scan history
 ```
 
+### Email (pentester mailbox)
+
+For pentesters, the platform provisions per-engagement email aliases
+(`<name>@its-me-tolmo.com`) and forwards inbound mail to your real address.
+These commands let you view those aliases and read the forwarded mail without
+leaving the terminal. Everything is scoped to your own account. The command is
+hidden from `--help` unless you signed in as a pentester or super-admin, but it
+always operates on your own mail.
+
+```bash
+tolmo email aliases              # List your alias addresses
+tolmo email aliases --json
+
+tolmo email list                 # List inbound emails (newest first)
+tolmo email list --alias <id>    # Only mail for one alias
+tolmo email list --org <slug>    # Only mail for one organization
+tolmo email list --limit 50 --json
+
+tolmo email read <message-id>    # Print the email body (plain text)
+tolmo email read <message-id> --html   # Print the raw HTML body instead
+tolmo email read <message-id> --json
+```
+
+You can also browse mail interactively in the TUI (`tolmo` with no args): the
+**Email** sidebar entry lists messages and opens each one's body.
+
 ### Organization management
 
 ```bash
