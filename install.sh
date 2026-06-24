@@ -150,11 +150,11 @@ fi
 if [ "$OS" = "darwin" ] && has_cmd brew; then
   if [ "$NIGHTLY" = true ]; then
     echo "Homebrew detected. You can also install nightly via:"
-    echo "  brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo && brew install tolmo@nightly"
+    echo "  brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo && brew install tolmohq/tolmo/tolmo-nightly"
     echo ""
   else
     echo "Homebrew detected. You can also install via:"
-    echo "  brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo && brew install tolmo"
+    echo "  brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo && brew install tolmohq/tolmo/tolmo"
     echo ""
   fi
 fi

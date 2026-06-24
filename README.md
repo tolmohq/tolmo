@@ -8,8 +8,13 @@ Command-line interface for the repo-1 platform.
 
 ```bash
 brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo
-brew install tolmo
+brew install tolmohq/tolmo/tolmo
 ```
+
+Homebrew 6.0.0+ requires third-party taps to be trusted before it will load
+their formulae. Installing the fully-qualified `tolmohq/tolmo/tolmo` name
+trusts just this formula, so no extra step is needed. To trust the whole tap
+instead (e.g. for `brew upgrade`), run `brew trust tolmohq/tolmo`.
 
 The Homebrew formula installs the CLI only. It does not modify Claude Code or
 other coding-agent directories during `brew install`.
@@ -24,7 +29,7 @@ tolmo skill status
 Nightly builds:
 
 ```bash
-brew install tolmo@nightly
+brew install tolmohq/tolmo/tolmo-nightly
 ```
 
 ### Install script (macOS / Linux)

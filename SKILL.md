@@ -11,9 +11,10 @@ description: |
 ## Installation
 
 ```bash
-# Homebrew (macOS / Linux)
+# Homebrew (macOS / Linux). Homebrew 6.0.0+ requires trusting third-party taps;
+# the fully-qualified name trusts just this formula (or run: brew trust tolmohq/tolmo).
 brew tap tolmohq/tolmo https://github.com/tolmohq/tolmo
-brew install tolmo
+brew install tolmohq/tolmo/tolmo
 
 # Install script
 curl -fsSL https://tolmo.com/install.sh | sh
