@@ -161,32 +161,39 @@ fi
 
 echo "Detecting platform: ${OS}/${ARCH}"
 
-# Fetch the right release
+# Resolve the release tag WITHOUT calling api.github.com. Its unauthenticated
+# REST API is capped at 60 requests/hour/IP — easily exhausted behind NAT/VPN,
+# and by Nix itself (it hits the same API to resolve nixpkgs), so the call would
+# 403 and the old code mistranslated that into "no release found" (TOL-1412).
+# github.com's web endpoints below carry no such limit.
 if [ "$NIGHTLY" = true ]; then
   echo "Fetching latest nightly pre-release..."
-  TAG="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases" \
-    | grep -o '"tag_name":[[:space:]]*"[^"]*-nightly\.[^"]*"' \
-    | head -1 \
-    | cut -d'"' -f4)"
-  if [ -z "$TAG" ]; then
-    echo "Error: no nightly release found" >&2
-    exit 1
-  fi
-  VERSION="${TAG#v}"
+  # releases.atom lists every release newest-first, prereleases included.
+  TAG="$(curl -fsSL "https://github.com/${REPO}/releases.atom" \
+    | grep -o 'releases/tag/[^"]*-nightly\.[^"]*' \
+    | sed 's#releases/tag/##' \
+    | head -1)"
   ARCHIVE_PREFIX="tolmo-nightly"
+  RELEASE_KIND="nightly pre-release"
 else
   echo "Fetching latest stable release..."
-  TAG="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" \
-    | grep -o '"tag_name":[[:space:]]*"[^"]*"' \
-    | head -1 \
-    | cut -d'"' -f4)"
-  if [ -z "$TAG" ]; then
-    echo "Error: no stable release found" >&2
-    exit 1
-  fi
-  VERSION="${TAG#v}"
+  # /releases/latest 302-redirects to /releases/tag/<TAG>; read the tag from the
+  # resolved URL (HEAD only, no body download).
+  TAG="$(curl -fsSLI -o /dev/null -w '%{url_effective}\n' \
+    "https://github.com/${REPO}/releases/latest" \
+    | sed -n 's#.*/releases/tag/##p')"
   ARCHIVE_PREFIX="tolmo"
+  RELEASE_KIND="stable release"
 fi
+
+if [ -z "$TAG" ]; then
+  echo "Error: could not determine the latest ${RELEASE_KIND} from GitHub." >&2
+  echo "Check your network connection and retry. To install manually, download" >&2
+  echo "a release from:" >&2
+  echo "  https://github.com/${REPO}/releases" >&2
+  exit 1
+fi
+VERSION="${TAG#v}"
 
 echo "Installing tolmo ${TAG}..."
 
