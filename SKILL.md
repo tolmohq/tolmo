@@ -2,7 +2,8 @@
 name: tolmo
 description: |
   Use the Tolmo CLI to query infrastructure graphs, run SQL/Cypher queries,
-  proxy requests to connected services (AWS, GitHub, Linear, Sentry, Datadog),
+  proxy requests to connected services (AWS, GitHub, Linear, Sentry, Datadog,
+  Drata, Wiz),
   manage code repositories, and create/manage security findings.
 ---
 
@@ -133,6 +134,13 @@ tolmo query sentry /api/0/organizations/acme/issues/
 
 # Datadog (REST)
 tolmo query datadog /api/v1/monitors
+
+# Drata (REST, read-only; paths are relative to /public/v2)
+tolmo query drata /company
+tolmo query drata '/workspaces?size=100&includeTotalCount=true'
+
+# Wiz (GraphQL, read-only)
+tolmo query wiz --file query.graphql
 ```
 
 When an org has multiple integrations for the same provider, pass
@@ -239,9 +247,30 @@ tolmo findings status <findingId> false_positive
 # View status change audit trail
 tolmo findings history <findingId>
 
+# Manage private evidence attachments (text, images, video, or other files)
+tolmo findings attachments list <findingId>
+tolmo findings attachments list <findingId> --json
+tolmo findings attachments upload <findingId> ./evidence.png
+tolmo findings attachments download <findingId> <attachmentId>
+tolmo findings attachments download <findingId> <attachmentId> \
+  --output ./evidence.png --force
+tolmo findings attachments delete <findingId> <attachmentId> --yes
+
 # Delete (requires --yes)
 tolmo findings delete <findingId> --yes
 ```
+
+Finding attachments are sensitive evidence. They may be any regular file up
+to 250 MiB and are streamed only through Tolmo's authenticated API; no public
+object URL is returned. Attachment commands require an interactive user token
+for an organization member, an explicitly granted pentester, or a Tolmo admin.
+Machine organization tokens are rejected. Deleting an attachment additionally
+requires being its uploader or a Tolmo admin. Finding and attachment IDs both
+support unambiguous prefix matching. Downloads default to the stored filename,
+reduce implicit names to a safe basename, refuse to overwrite existing files
+without `--force`, and create files with owner-only permissions (`0600`). With
+`--force`, the CLI replaces the destination only after the download completes,
+so a failed request cannot truncate existing evidence.
 
 #### Findings field reference
 
