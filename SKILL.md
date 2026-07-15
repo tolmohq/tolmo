@@ -234,6 +234,17 @@ tolmo findings create \
   --visibility published \
   --status open
 
+# Record the internal modus operandi (how the finding was produced) at
+# creation time. Internal Tolmo-side triage narrative — never shown to the
+# customer; readable only through admin tooling. Requires a super-admin or
+# pentester token (a plain org token is rejected with 403). Also accepts
+# --modus-operandi-file <path> ('-' for stdin).
+tolmo findings create \
+  --title "IAM role misconfiguration" \
+  --severity critical \
+  --description-file ./finding.md \
+  --modus-operandi "Assumed the CI role via the unscoped trust policy, then enumerated attached policies."
+
 # Update fields (only specified flags are changed)
 tolmo findings update <findingId> --severity critical --visibility published
 tolmo findings update <findingId> --description-file ./updated.md
@@ -280,6 +291,8 @@ so a failed request cannot truncate existing evidence.
 | `--severity` | `critical` `high` `medium` `low` `info` | — | Required on create |
 | `--description` | markdown string | `""` | Mutually exclusive with `--description-file` |
 | `--description-file` | file path or `-` for stdin | — | Mutually exclusive with `--description` |
+| `--modus-operandi` | text | — | Create-only. Internal Tolmo-side notes on how the finding was produced; never shown to the customer; requires super-admin/pentester (org token → 403). Mutually exclusive with `--modus-operandi-file` |
+| `--modus-operandi-file` | file path or `-` for stdin | — | Create-only; mutually exclusive with `--modus-operandi` |
 | `--include` | `drafts` | — | List-only; returns draft findings alongside published findings |
 | `--visibility` | `draft` `published` | `draft` | Create/update-only; controls the finding publication state |
 | `--status` | `open` `in_review` `closed` `acknowledged` `false_positive` | `open` | |
