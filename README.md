@@ -150,3 +150,26 @@ Execute a Cypher query against the graph database.
 tolmo cypher "MATCH (n) RETURN labels(n), count(*)"
 tolmo cypher --json "MATCH (n) RETURN n LIMIT 5"
 ```
+
+### `external-findings`
+
+Browse scanner findings imported from Wiz, Drata, Aikido, and other connected
+platforms. The provider's status and Tolmo's triage/exploitation state are
+shown separately.
+
+```bash
+tolmo external-findings list
+tolmo external-findings list --origin wiz --state needs_exploitation
+tolmo external-findings list --cursor '<opaque-cursor>' --json
+tolmo external-findings get <external-finding-id>
+tolmo external-findings get <external-finding-id> --json
+```
+
+`--json` preserves the complete API response: pagination/facets for `list`,
+and source identity, raw provider data, linked-finding relationship, plus both
+`reportMarkdown` and the display-oriented `markdown` alias for `get`.
+Human-readable list output includes both the original-platform link and the
+canonical Tolmo-finding link/relationship. Relative Tolmo and assessment-report
+links are expanded to the app origin in human-readable output, and untrusted
+provider/agent text is stripped of terminal control sequences. JSON output is
+left unchanged.
