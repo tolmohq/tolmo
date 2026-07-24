@@ -22,6 +22,9 @@ curl -fsSL https://tolmo.com/install.sh | sh
 
 # install.sh uses a writable user install directory by default on macOS/Linux.
 # Set TOLMO_INSTALL_DIR to choose a specific target directory.
+
+# Update the current stable or nightly installation.
+tolmo update
 ```
 
 ## Authentication
@@ -208,7 +211,9 @@ draft findings.
 > `--description` / `--description-file` (and edited via
 > `findings update`) is what dev/CTO customers actually read. Keep it
 > concise, evidence-backed, and specific about the affected resource,
-> impact, and next action.
+> impact, and next action. Before writing or editing that body, load the
+> **`tolmo-finding-format`** skill (installed alongside this one by
+> `tolmo skill install`) for the required structure and checklist.
 
 ```bash
 # List findings (published by default; opt in to include drafts too)
@@ -226,18 +231,22 @@ tolmo findings create \
   --severity high \
   --description "Markdown description here"
 
-# Create with description from a file (or '-' for stdin)
+# Create with description from a file (or '-' for stdin). --source-name labels
+# the finding's origin (default "Tolmo"); set it to the engagement.
 tolmo findings create \
   --title "IAM role misconfiguration" \
   --severity critical \
   --description-file ./finding.md \
+  --source-name "Pentest Q3 2026" \
   --visibility published \
   --status open
 
-# Record the internal modus operandi (how the finding was produced) at
-# creation time. Internal Tolmo-side triage narrative — never shown to the
-# customer; readable only through admin tooling. Requires a super-admin or
-# pentester token (a plain org token is rejected with 403). Also accepts
+# Record the internal modus operandi (how the finding was produced). Internal
+# Tolmo-side triage narrative — never shown to the customer; readable only
+# through admin tooling. Requires a super-admin or pentester (a non-privileged
+# org token is rejected with 403). MANDATORY when a pentester creates a finding
+# — a pentester create that omits it fails with 400; super-admins are exempt.
+# Editable ad-hoc later via `findings update --modus-operandi`. Also accepts
 # --modus-operandi-file <path> ('-' for stdin).
 tolmo findings create \
   --title "IAM role misconfiguration" \
@@ -248,6 +257,8 @@ tolmo findings create \
 # Update fields (only specified flags are changed)
 tolmo findings update <findingId> --severity critical --visibility published
 tolmo findings update <findingId> --description-file ./updated.md
+tolmo findings update <findingId> --source-name "Pentest Q3 2026"
+tolmo findings update <findingId> --modus-operandi "Re-confirmed via the CI role after the Q3 key rotation."
 
 # Transition status (dedicated endpoint — only changes status)
 tolmo findings status <findingId> in_review
@@ -262,6 +273,7 @@ tolmo findings history <findingId>
 tolmo findings attachments list <findingId>
 tolmo findings attachments list <findingId> --json
 tolmo findings attachments upload <findingId> ./evidence.png
+tolmo findings attachments upload <findingId> ./poc.png --title "Reflected XSS PoC"
 tolmo findings attachments download <findingId> <attachmentId>
 tolmo findings attachments download <findingId> <attachmentId> \
   --output ./evidence.png --force
@@ -271,13 +283,27 @@ tolmo findings attachments delete <findingId> <attachmentId> --yes
 tolmo findings delete <findingId> --yes
 ```
 
+`create` prints a shareable app URL for the finding, and `get` / `list --json`
+include it as the `url` field — link a customer straight to the finding page
+with it.
+
+`findings update` authorization: a super-admin may edit any finding; a
+pentester may edit findings **they authored** — including after publishing, so
+you can correct your own work (status still goes through `findings status`, and
+`--source-name` stays super-admin-only). You cannot edit another author's
+finding. Author self-edits are logged server-side.
+
 Finding attachments are sensitive evidence. They may be any regular file up
 to 250 MiB and are streamed only through Tolmo's authenticated API; no public
-object URL is returned. Attachment commands require an interactive user token
-for an organization member, an explicitly granted pentester, or a Tolmo admin.
+object URL is returned. `--title` is optional at upload; when set, it becomes
+the primary label reviewers see next to the file name in the app. Attachment
+commands require an interactive user token for an organization member, an
+explicitly granted pentester, or a Tolmo admin.
 Machine organization tokens are rejected. Deleting an attachment additionally
 requires being its uploader or a Tolmo admin. Finding and attachment IDs both
-support unambiguous prefix matching. Downloads default to the stored filename,
+support unambiguous prefix matching. A scoped pentester can manage attachments
+on a draft they authored without publishing it first. Downloads default to the
+stored filename,
 reduce implicit names to a safe basename, refuse to overwrite existing files
 without `--force`, and create files with owner-only permissions (`0600`). With
 `--force`, the CLI replaces the destination only after the download completes,
@@ -291,8 +317,9 @@ so a failed request cannot truncate existing evidence.
 | `--severity` | `critical` `high` `medium` `low` `info` | — | Required on create |
 | `--description` | markdown string | `""` | Mutually exclusive with `--description-file` |
 | `--description-file` | file path or `-` for stdin | — | Mutually exclusive with `--description` |
-| `--modus-operandi` | text | — | Create-only. Internal Tolmo-side notes on how the finding was produced; never shown to the customer; requires super-admin/pentester (org token → 403). Mutually exclusive with `--modus-operandi-file` |
-| `--modus-operandi-file` | file path or `-` for stdin | — | Create-only; mutually exclusive with `--modus-operandi` |
+| `--source-name` | any string (max 256) | `Tolmo` | Create/update. Origin label for the finding (e.g. `"Pentest Q3 2026"`, `"HackerOne"`); shown as `Source:` in `get` |
+| `--modus-operandi` | text | — | Create/update. Internal Tolmo-side notes on how the finding was produced; never shown to the customer; requires super-admin/pentester (non-privileged token → 403). Mandatory when a pentester creates (omitting it → 400); super-admins exempt. Mutually exclusive with `--modus-operandi-file` |
+| `--modus-operandi-file` | file path or `-` for stdin | — | Create/update; mutually exclusive with `--modus-operandi` |
 | `--include` | `drafts` | — | List-only; returns draft findings alongside published findings |
 | `--visibility` | `draft` `published` | `draft` | Create/update-only; controls the finding publication state |
 | `--status` | `open` `in_review` `closed` `acknowledged` `false_positive` | `open` | |

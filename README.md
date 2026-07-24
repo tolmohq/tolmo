@@ -57,6 +57,21 @@ Download the `.deb` package from the
 sudo dpkg -i tolmo_<version>_<arch>.deb
 ```
 
+## Updating
+
+```bash
+tolmo update
+```
+
+Tolmo keeps Homebrew installations managed by Homebrew. Direct installations
+download the matching release archive, verify it against the published
+SHA-256 checksum, and replace the binary atomically.
+
+Interactive CLI runs check for a new release in the background at most once
+every 24 hours and show a short notice when one is available. The check is
+disabled in CI and non-interactive sessions; set
+`TOLMO_DISABLE_UPDATE_CHECK=1` to disable it explicitly.
+
 ## Authentication
 
 ```bash
