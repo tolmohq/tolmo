@@ -354,9 +354,10 @@ tolmo external-findings get <externalFindingId> --json
 
 Supported Tolmo lifecycle states are `untriaged`, `false_positive`,
 `needs_exploitation`, `exploitation_pending`, `exploited`,
-`exploitation_unsuccessful`, `inconclusive`, and `dismissed`. `inconclusive`
-is a terminal exploitation outcome; an inconclusive false-positive review
-routes to `needs_exploitation` instead.
+`exploitation_unsuccessful`, `inconclusive`, `dismissed`, and `remediated`.
+`inconclusive` is a terminal exploitation outcome; an inconclusive
+false-positive review routes to `needs_exploitation` instead. `remediated` is
+the post-exploitation last mile: proven real by exploitation, then fixed.
 
 The list table explicitly separates `ORIGINAL STATUS` from `STATE`, links back
 to the original platform, and shows the canonical `TOLMO FINDING` together
