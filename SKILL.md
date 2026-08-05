@@ -254,7 +254,8 @@ tolmo findings create \
   --description-file ./finding.md \
   --modus-operandi "Assumed the CI role via the unscoped trust policy, then enumerated attached policies."
 
-# Update fields (only specified flags are changed)
+# Update authoring fields (only specified flags are changed; status uses the
+# dedicated `findings status` command below)
 tolmo findings update <findingId> --severity critical --visibility published
 tolmo findings update <findingId> --description-file ./updated.md
 tolmo findings update <findingId> --source-name "Pentest Q3 2026"
@@ -262,7 +263,10 @@ tolmo findings update <findingId> --modus-operandi "Re-confirmed via the CI role
 
 # Transition status (dedicated endpoint — only changes status)
 tolmo findings status <findingId> in_review
-tolmo findings status <findingId> closed
+tolmo findings status <findingId> closed \
+  --justification "Remediated in production and verified by a follow-up scan."
+tolmo findings status <findingId> closed \
+  --justification-file ./closure-note.md
 tolmo findings status <findingId> acknowledged
 tolmo findings status <findingId> false_positive
 
@@ -322,7 +326,7 @@ so a failed request cannot truncate existing evidence.
 | `--modus-operandi-file` | file path or `-` for stdin | — | Create/update; mutually exclusive with `--modus-operandi` |
 | `--include` | `drafts` | — | List-only; returns draft findings alongside published findings |
 | `--visibility` | `draft` `published` | `draft` | Create/update-only; controls the finding publication state |
-| `--status` | `open` `in_review` `closed` `acknowledged` `false_positive` | `open` | |
+| `--status` | `open` `in_review` `closed` `acknowledged` `false_positive` | `open` | Create and `findings status` only; generic `findings update` does not accept lifecycle changes |
 
 ### External findings
 
