@@ -406,6 +406,17 @@ tolmo website list               # List crawled domains
 tolmo website scans              # List scan history
 ```
 
+### Domain inventory
+
+Canonical customer hostnames from `domain_inventory` (not crawled websites).
+
+```bash
+tolmo domains list
+tolmo domains list --q api --lifecycle current --dns resolved
+tolmo domains list --source cert_spotter --limit 100 --json
+tolmo domains list --cursor <nextCursor>
+```
+
 ### Email (pentester mailbox)
 
 For pentesters, the platform provisions per-engagement email aliases
