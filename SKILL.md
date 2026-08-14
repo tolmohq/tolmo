@@ -414,7 +414,7 @@ Canonical customer hostnames from `domain_inventory` (not crawled websites).
 tolmo domains list
 tolmo domains list --q api --lifecycle current --dns resolved
 tolmo domains list --source cert_spotter --limit 100 --json
-tolmo domains list --cursor <nextCursor>
+tolmo domains list --page 2 --limit 50
 ```
 
 ### Email (pentester mailbox)
