@@ -354,6 +354,12 @@ tolmo external-findings list --json
 # Inspect the original platform URL/body and assessment report provenance
 tolmo external-findings get <externalFindingId>
 tolmo external-findings get <externalFindingId> --json
+
+# Import a consolidated DeepSec/Codex Security Markdown report. Reusing the
+# same provider, source, and USR-* IDs refreshes those rows idempotently.
+tolmo external-findings upload ./security-scan-unified-report.md \
+  --provider code-security \
+  --source repo-1-security-scans
 ```
 
 Supported Tolmo lifecycle states are `untriaged`, `false_positive`,
