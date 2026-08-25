@@ -328,54 +328,25 @@ so a failed request cannot truncate existing evidence.
 | `--visibility` | `draft` `published` | `draft` | Create/update-only; controls the finding publication state |
 | `--status` | `open` `in_review` `closed` `acknowledged` `false_positive` | `open` | Create and `findings status` only; generic `findings update` does not accept lifecycle changes |
 
-### External findings
+### Upload third-party findings
 
-External findings are imported from security platforms such as Wiz, Drata,
-and Aikido. Their provider-native status is kept separate from Tolmo's triage
-and exploitation lifecycle.
+Import consolidated DeepSec/Codex Security reports through the same `findings`
+command used for Tolmo-authored findings. `--provider` identifies who produced
+the findings; `--source` is the stable idempotency namespace for that feed.
 
 ```bash
-# Browse the current page
-tolmo external-findings list
-
-# Filter server-side
-tolmo external-findings list \
-  --origin wiz \
-  --severity high \
-  --state needs_exploitation \
-  --q "public bucket"
-
-# Continue from the opaque cursor printed after the previous page
-tolmo external-findings list --cursor '<cursor>' --limit 50
-
-# Preserve the complete page envelope, including facets and nextCursor
-tolmo external-findings list --json
-
-# Inspect the original platform URL/body and assessment report provenance
-tolmo external-findings get <externalFindingId>
-tolmo external-findings get <externalFindingId> --json
-
 # Import a consolidated DeepSec/Codex Security Markdown report. Reusing the
 # same provider, source, and USR-* IDs refreshes those rows idempotently.
-tolmo external-findings upload ./security-scan-unified-report.md \
+tolmo findings upload ./security-scan-unified-report.md \
   --provider code-security \
   --source repo-1-security-scans
 ```
 
-Supported Tolmo lifecycle states are `untriaged`, `false_positive`,
-`needs_exploitation`, `exploitation_pending`, `exploited`,
-`exploitation_unsuccessful`, `inconclusive`, `dismissed`, and `remediated`.
-`inconclusive` is a terminal exploitation outcome; an inconclusive
-false-positive review routes to `needs_exploitation` instead. `remediated` is
-the post-exploitation last mile: proven real by exploitation, then fixed.
-
-The list table explicitly separates `ORIGINAL STATUS` from `STATE`, links back
-to the original platform, and shows the canonical `TOLMO FINDING` together
-with its source relationship and Tolmo link. Detail output includes report
-markdown plus the producing agent-output and workflow-run identifiers, so
-assessment provenance remains auditable. JSON output preserves the API's
-canonical `reportMarkdown` field, its `markdown` display alias, raw provider
-payload, rule metadata, source identity, pagination metadata, and facets.
+The command preserves detailed Markdown, scanner severity, confidence,
+locations, source IDs, and provenance records. It batches large reports and
+reports partial progress if a later batch fails. `--status` defaults to `open`,
+`--kind` defaults to `code_security`, and `--json` emits the full upload
+summary.
 
 ### Datadog monitors (managed by the platform)
 
