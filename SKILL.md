@@ -225,17 +225,45 @@ tolmo findings list --include drafts --json
 tolmo findings get <findingId>
 tolmo findings get <findingId> --json
 
-# Create a finding
+# Create a finding. Exactly ONE resource flag is required — --resource-name —
+# and only when you authenticate as a human (user token / `tolmo auth login`):
+# the backend rejects a manual finding that names no affected resource. This is
+# the whole minimal invocation:
 tolmo findings create \
   --title "Exposed S3 bucket" \
   --severity high \
+  --resource-name my-bucket \
   --description "Markdown description here"
+
+# The other resource flags are OPTIONAL and independent of each other. Add
+# --resource-key to tie the finding to its graph node (what the remediation
+# agent anchors on), and --resource-type / --resource-arn when you have them:
+tolmo findings create \
+  --title "Exposed S3 bucket" \
+  --severity high \
+  --resource-name my-bucket \
+  --resource-key arn:aws:s3:::my-bucket \
+  --resource-type S3Bucket \
+  --description "Markdown description here"
+
+# A web finding. --resource-name is WHAT is affected; --target-url is the exact
+# live endpoint verification re-probes. They are usually different strings: the
+# resource is the asset, the target is the one address that reproduces the bug.
+# Only --target-url has to be probe-able, so cloud/IAM/policy findings simply
+# leave it unset.
+tolmo findings create \
+  --title "Unauthenticated export endpoint" \
+  --severity critical \
+  --resource-name api.example.com \
+  --target-url https://api.example.com/v2/exports?format=csv \
+  --description-file ./finding.md
 
 # Create with description from a file (or '-' for stdin). --source-name labels
 # the finding's origin (default "Tolmo"); set it to the engagement.
 tolmo findings create \
   --title "IAM role misconfiguration" \
   --severity critical \
+  --resource-name "arn:aws:iam::123456789012:role/ci-deploy" \
   --description-file ./finding.md \
   --source-name "Pentest Q3 2026" \
   --visibility published \
@@ -251,6 +279,7 @@ tolmo findings create \
 tolmo findings create \
   --title "IAM role misconfiguration" \
   --severity critical \
+  --resource-name "arn:aws:iam::123456789012:role/ci-deploy" \
   --description-file ./finding.md \
   --modus-operandi "Assumed the CI role via the unscoped trust policy, then enumerated attached policies."
 
@@ -268,7 +297,9 @@ tolmo findings status <findingId> closed \
 tolmo findings status <findingId> closed \
   --justification-file ./closure-note.md
 tolmo findings status <findingId> acknowledged
-tolmo findings status <findingId> false_positive
+# --justification also applies to false_positive (stored as falsePositiveReason)
+tolmo findings status <findingId> false_positive \
+  --justification "Scanner matched a test fixture, not the production config."
 
 # View status change audit trail
 tolmo findings history <findingId>
