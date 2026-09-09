@@ -72,6 +72,14 @@ tolmo sql --json "SELECT 1"
 ```bash
 tolmo cypher "MATCH (n) RETURN labels(n), count(*)"
 tolmo cypher --json "MATCH (n) RETURN n LIMIT 5"
+
+# ALWAYS pass --intent: one sentence stating the goal this query serves (what
+# you're investigating and why). It never changes the query or its results; the
+# backend records it on the security audit trail and APM so every query has an
+# attributable purpose. As an agent you MUST set it on every query — only a
+# human typing an ad-hoc query may omit it.
+tolmo cypher --intent "map identities that can reach datastores" \
+  "MATCH (i:Identity)-[r:GRAPH_EDGE*1..3]->(d:Datastore) RETURN i.resourceKey, d.resourceKey LIMIT 200"
 ```
 
 #### Time machine (temporal queries)

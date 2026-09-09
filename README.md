@@ -65,7 +65,10 @@ tolmo update
 
 Tolmo keeps Homebrew installations managed by Homebrew. Direct installations
 download the matching release archive, verify it against the published
-SHA-256 checksum, and replace the binary atomically.
+SHA-256 checksum, and replace the binary atomically. Debian package installs
+remain managed by dpkg; `tolmo update` identifies them and prints the command
+for installing the latest `.deb` instead of modifying `/usr/bin/tolmo`
+directly.
 
 Interactive CLI runs check for a new release in the background and shows a
 short notice when one is available. Successful checks are cached for 24 hours;
