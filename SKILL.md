@@ -205,15 +205,18 @@ tolmo threat-model get --step vuln-qualif  # Download single step
 
 ### Findings
 
-Manage security findings for the current organization. Findings have a
-severity (`critical`|`high`|`medium`|`low`|`info`), a visibility
-(`draft`|`published`), and a status (`open`|`in_review`|`closed`|
-`acknowledged`|`false_positive`).
+Manage security findings for the current organization. `findings list` is
+the unified org list (Tolmo-authored and third-party scanner rows). Findings
+have a severity (`critical`|`high`|`medium`|`low`|`info`), an origin
+(`tolmo` or a provider), a lifecycle state, and a status
+(`open`|`in_review`|`closed`|`acknowledged`|`false_positive`). Tolmo-authored
+rows also have a visibility (`draft`|`published`).
 
 Finding IDs support prefix matching — the short IDs shown by `list`
 (first 8 chars) work in all commands. `findings list` returns published
-findings by default; pass `--include drafts` when you also need in-flight
-draft findings.
+and scanner rows by default; pass `--drafts-only` when you need only
+in-flight draft findings, or the deprecated `--include drafts` alias to
+keep drafts in addition to the published list.
 
 > **Formatting the description body:** the markdown passed to
 > `--description` / `--description-file` (and edited via
@@ -224,10 +227,10 @@ draft findings.
 > `tolmo skill install`) for the required structure and checklist.
 
 ```bash
-# List findings (published by default; opt in to include drafts too)
+# List findings (unified list; opt in to drafts)
 tolmo findings list
-tolmo findings list --status open --severity critical
-tolmo findings list --include drafts --json
+tolmo findings list --status open --severity critical --origin wiz
+tolmo findings list --drafts-only --json
 
 # Show a single finding (prints markdown description)
 tolmo findings get <findingId>
