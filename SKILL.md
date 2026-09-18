@@ -73,12 +73,13 @@ tolmo sql --json "SELECT 1"
 tolmo cypher "MATCH (n) RETURN labels(n), count(*)"
 tolmo cypher --json "MATCH (n) RETURN n LIMIT 5"
 
-# ALWAYS pass --intent: one sentence stating the goal this query serves (what
-# you're investigating and why). It never changes the query or its results; the
-# backend records it on the security audit trail and APM so every query has an
-# attributable purpose. As an agent you MUST set it on every query — only a
-# human typing an ad-hoc query may omit it.
-tolmo cypher --intent "map identities that can reach datastores" \
+# ALWAYS pass --intent: name the specific question this query should answer
+# and how the result will guide your next step, in one short sentence.
+# For discovery, say what you need to learn to choose the next checks.
+# Avoid "explore the graph", repeating the overall task, or assuming findings.
+# Recorded for observability; does not affect query results.
+# Only a human typing a one-off interactive query may omit it.
+tolmo cypher --intent "Find identity-to-datastore paths so I can choose which access relationships to investigate" \
   "MATCH (i:Identity)-[r:GRAPH_EDGE*1..3]->(d:Datastore) RETURN i.resourceKey, d.resourceKey LIMIT 200"
 ```
 
@@ -237,9 +238,11 @@ tolmo findings get <findingId>
 tolmo findings get <findingId> --json
 
 # Create a finding. Exactly ONE resource flag is required — --resource-name —
-# and only when you authenticate as a human (user token / `tolmo auth login`):
-# the backend rejects a manual finding that names no affected resource. This is
-# the whole minimal invocation:
+# and only when you authenticate as a human (user token / `tolmo auth login`)
+# and pass no --target-url: the backend rejects a manual finding anchored to
+# nothing. A finding you REPORT in your own product is exempt (the server
+# attributes it to you, not to Tolmo), so --target-url alone is enough there.
+# This is the whole minimal invocation:
 tolmo findings create \
   --title "Exposed S3 bucket" \
   --severity high \
