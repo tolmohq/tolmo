@@ -304,7 +304,10 @@ tolmo findings update <findingId> --description-file ./updated.md
 tolmo findings update <findingId> --source-name "Pentest Q3 2026"
 tolmo findings update <findingId> --modus-operandi "Re-confirmed via the CI role after the Q3 key rotation."
 
-# Transition status (dedicated endpoint — only changes status)
+# Transition status (dedicated endpoint — only changes status).
+# Scanner rows (GitHub and the rest) close in Tolmo only: the server writes
+# the provider status and does not call GitHub. A later scan that still
+# reports the alert reopens it. `canceled` is refused for those rows.
 tolmo findings status <findingId> in_review
 tolmo findings status <findingId> closed \
   --justification "Remediated in production and verified by a follow-up scan."
