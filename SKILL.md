@@ -272,6 +272,23 @@ tolmo findings create \
   --target-url https://api.example.com/v2/exports?format=csv \
   --description-file ./finding.md
 
+# Set the vulnerability type with --category, NOT a "[Type] " title prefix.
+# Customers see it as the finding's type badge. Use a slug: xss, sqli,
+# injection-other, ssrf, xxe, idor, broken-access-control,
+# missing-authentication, auth-bypass, auth, jwt, session, secret-exposure,
+# info-leak, open-redirect, csrf, ssti, rce, path-traversal, file-upload,
+# deserialization, race-condition, crypto, security-headers, cloud-misconfig,
+# subdomain-takeover, iam-privesc, supply-chain, dos, logging, misc. Common
+# aliases ("bola", "sql-injection") are stored as their slug; any other value
+# is rejected with 400 and the list. `tolmo findings create --help` prints it.
+tolmo findings create \
+  --title "Any user can read another tenant's invoices" \
+  --severity high \
+  --category idor \
+  --resource-name api.example.com \
+  --target-url https://api.example.com/v2/invoices/42 \
+  --description-file ./finding.md
+
 # Create with description from a file (or '-' for stdin). --source-name labels
 # the finding's origin (default "Tolmo"); set it to the engagement.
 tolmo findings create \
@@ -302,6 +319,7 @@ tolmo findings create \
 tolmo findings update <findingId> --severity critical --visibility published
 tolmo findings update <findingId> --description-file ./updated.md
 tolmo findings update <findingId> --source-name "Pentest Q3 2026"
+tolmo findings update <findingId> --category idor   # --category '' clears it
 tolmo findings update <findingId> --modus-operandi "Re-confirmed via the CI role after the Q3 key rotation."
 
 # Transition status (dedicated endpoint — only changes status).
