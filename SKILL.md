@@ -90,13 +90,16 @@ tracking when resources were first discovered and last seen by crawlers.
 
 ```bash
 # Resources added in the last 7 days
-tolmo cypher "MATCH (n:GraphNode) WHERE n.firstSeenAt >= (timestamp() - 7*24*60*60*1000) RETURN n.resourceType, n.resourceKey ORDER BY n.firstSeenAt DESC"
+tolmo cypher --intent "List resources added this week to decide which new ones to review" \
+  "MATCH (n:GraphNode) WHERE n.firstSeenAt >= (timestamp() - 7*24*60*60*1000) RETURN n.resourceType, n.resourceKey ORDER BY n.firstSeenAt DESC"
 
 # Stale resources not seen in 48 hours
-tolmo cypher "MATCH (n:GraphNode) WHERE n.lastSeenAt < (timestamp() - 48*60*60*1000) RETURN n.resourceType, n.resourceKey LIMIT 50"
+tolmo cypher --intent "Find resources crawlers stopped seeing to check whether they were deleted" \
+  "MATCH (n:GraphNode) WHERE n.lastSeenAt < (timestamp() - 48*60*60*1000) RETURN n.resourceType, n.resourceKey LIMIT 50"
 
 # New relationships in the last 24 hours
-tolmo cypher "MATCH ()-[r:GRAPH_EDGE]->() WHERE r.firstSeenAt >= (timestamp() - 24*60*60*1000) RETURN r.type, count(r) AS cnt ORDER BY cnt DESC"
+tolmo cypher --intent "Count relationship types added today to spot unexpected new access" \
+  "MATCH ()-[r:GRAPH_EDGE]->() WHERE r.firstSeenAt >= (timestamp() - 24*60*60*1000) RETURN r.type, count(r) AS cnt ORDER BY cnt DESC"
 ```
 
 ### Repository operations
@@ -226,6 +229,43 @@ keep drafts in addition to the published list.
 > impact, and next action. Before writing or editing that body, load the
 > **`tolmo-finding-format`** skill (installed alongside this one by
 > `tolmo skill install`) for the required structure and checklist.
+
+#### Author a finding as a document (pentesters and admins)
+
+A pentester or admin authors a finding as one **finding document**: pull it,
+edit it, push it, publish it. The document holds everything the finding page
+shows (summary, proof-of-concept steps, root cause, CVSS) whatever the storage
+layout underneath, so never reconstruct a finding from `get` / `update`.
+
+```bash
+tolmo findings pull TL-QUVARI              # ./TL-QUVARI/ (or -o finding.yaml)
+tolmo findings validate ./TL-QUVARI        # dry run: issues and warnings, nothing written
+tolmo findings push ./TL-QUVARI            # save; new ids and the new revision are written back
+tolmo findings publish TL-QUVARI           # needs a title and at least one exploit
+tolmo findings attachments upload TL-QUVARI ./repro.sh --kind repro-script \
+  --exploit <exploit id> --invocation "TOKEN=<OPERATOR_TOKEN> bash repro.sh" \
+  --placeholder OPERATOR_TOKEN="A seller operator session token"
+tolmo findings attachments update TL-QUVARI <attachment id> \
+  --invocation "…" --placeholder …         # change how a script runs, keep the file
+```
+
+- Push a document without an `id` to create a new draft.
+- **Ids come from the server only.** Never type, invent or copy an exploit id:
+  a push naming an exploit that is not a live exploit of this finding is
+  refused. Leave `id` out to create an exploit; use `retireExploits` to
+  remove one. Leaving an exploit out of the document keeps it.
+- A push is refused when the finding changed since it was pulled
+  (`revision`): pull again and reapply the edits.
+- Steps carry `title`, `summary`, `important` and markdown details. Put
+  requests in ` ```http-exchange ` fences (request, `===`, response) and
+  write secrets as `<UPPER_SNAKE>` placeholders.
+- A finding in the legacy markdown format is pulled as a v1 draft with
+  warnings; the first push converts it. Rewrite the derived steps (their
+  titles are cut from the old text) from the old Proof of Concept, move the
+  code analysis into `rca`, and keep only the Recommendation in `details`
+  (see `tolmo-finding-format`). Once a finding is v1,
+  `findings update --description` is refused: edit its document instead.
+- A finding in another org needs `--org <slug>`.
 
 ```bash
 # List findings (unified list; opt in to drafts)
