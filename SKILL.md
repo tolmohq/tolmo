@@ -234,7 +234,7 @@ keep drafts in addition to the published list.
 
 A pentester or admin authors a finding as one **finding document**: pull it,
 edit it, push it, publish it. The document holds everything the finding page
-shows (summary, proof-of-concept steps, root cause, CVSS) whatever the storage
+shows (summary, proof-of-concept steps, root cause, fix, CVSS) whatever the storage
 layout underneath, so never reconstruct a finding from `get` / `update`.
 
 ```bash
@@ -261,11 +261,133 @@ tolmo findings attachments update TL-QUVARI <attachment id> \
   write secrets as `<UPPER_SNAKE>` placeholders.
 - A finding in the legacy markdown format is pulled as a v1 draft with
   warnings; the first push converts it. Rewrite the derived steps (their
-  titles are cut from the old text) from the old Proof of Concept, move the
-  code analysis into `rca`, and keep only the Recommendation in `details`
-  (see `tolmo-finding-format`). Once a finding is v1,
+  titles are cut from the old text) from the old Proof of Concept. The old
+  Recommendation lands in `fix/short.md` (Immediate correction) and
+  `fix/long.md` (Permanent correction), or wholly in `fix/short.md`: review
+  it and split it into the four horizons. The code analysis is not
+  converted: write the root cause as `rca/` steps (see
+  `tolmo-finding-format`). Once a finding is v1,
   `findings update --description` is refused: edit its document instead.
 - A finding in another org needs `--org <slug>`.
+
+The folder (`tolmo findings pull --help` has the full layout):
+
+```
+TL-QUVARI/
+  finding.yaml       title, severity, category, modusOperandi, rcaSource, cvss, ids
+  summary.md         2-3 sentences, consequence first
+  rca/NN-<claim>.md  root-cause steps: frontmatter title / summary, body = code citations
+  fix/mitigation.md  fix/short.md  fix/long.md  fix/tests.md   (each optional)
+  exploits/<n>/      exploit.yaml + NN-<slug>.md proof-of-concept steps
+```
+
+**Root cause (`rca/`).** The root cause is a numbered chain of reasoning
+from the entry point to the flaw: one file per step, `rca/NN-<slug>.md`,
+read in file-name order. No file in `rca/` means no root cause.
+
+- `rcaSource: {repo, commit}` in `finding.yaml` (`rca.source` in a single
+  file) is the default repository (`owner/name`, as `tolmo code list` shows
+  it) and the full commit SHA every snippet was read at.
+- **One claim per step.** The frontmatter `title` is the claim, as a
+  sentence ("The invitation handler takes the role from the request"); the
+  `summary` is one or two sentences on why it holds.
+- The body is the step's **code citations**, in order. Each citation is its
+  markdown (what this code shows, in the step's reasoning), then one fenced
+  block whose info string carries `file=` (path from the repository root,
+  required), `lines=` (as displayed, containing the snippet), `role=`, and
+  `repo=` + `commit=` only for code read in another repository or at another
+  commit. Quote a value with spaces: `lines="74-84, 277-283"`. A citation may
+  have no markdown (just the fence); a step may have no citation (an empty
+  body).
+- **Roles.** `vulnerable`: where the flaw is. `fix`: where the change goes.
+  `reference`: code read for comparison, for example the route that already
+  has the right check.
+- **The snippet** is the few lines that prove the claim, copied verbatim at
+  the commit: not the whole function. When it contains ```` ``` ````, use a
+  longer fence (```` ```` ````). A fence without `file=` (or an indented
+  one) is ordinary markdown, part of the next citation's text.
+- **The impacted-file list is derived from the citations**, never written
+  by hand: cite every file you mention.
+- **`[[step:N]]`** in a summary or a citation's text cites step N
+  (1-based). It is checked on push: a number with no step is refused.
+- Text after the last citation is refused: it goes in a citation's
+  markdown or in the summary.
+
+`rca/01-the-invitation-handler-takes-the-role-from-the-request.md`:
+
+````markdown
+---
+title: The invitation handler takes the role from the request
+summary: InviteUserUseCase copies the role from the request body into the invitation. Nothing compares it with the caller's own role.
+---
+The role comes from the body and is saved unchanged.
+
+```kotlin file=user/InviteUserUseCase.kt lines=79-82 role=vulnerable
+val role = request.role
+val invitation = Invitation(email = request.email, role = role)
+invitationRepository.save(invitation)
+```
+
+The user-update route already checks the role. The invitation route needs
+the same call, before the save.
+
+```kotlin file=user/UpdateUserUseCase.kt lines=41-43 role=reference
+requireRole(caller, atLeast = target.role)
+```
+````
+
+`rca/02-the-gateway-forwards-the-role-unchanged.md`, citing code in another
+repository:
+
+````markdown
+---
+title: The gateway forwards the role unchanged
+summary: The API gateway passes the body through, so the handler in [[step:1]] is the only place the role could be checked.
+---
+```typescript file=src/routes/invitations.ts lines=12-14 role=reference repo=acme/api-gateway commit=9b8a7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b
+router.post('/invitations', (req, res) =>
+  proxy(req.body, res));
+```
+````
+
+**Fix (`fix/`).** One markdown file per horizon; leave a file out when it has
+nothing to say (no file at all means no fix):
+
+- `fix/mitigation.md`: what reduces exposure now, before the fix ships (a
+  feature flag, a WAF rule, a revoked key). Put the clean-up of what the
+  flaw already let through under a `### Clean up …` heading
+  (`### Clean up invitations created with role 0`).
+- `fix/short.md`: the code changes. One `- [ ]` task item per change, with
+  an indented paragraph below it as its note (where, and how).
+- `fix/long.md`: what keeps the class of bug from coming back (a shared
+  guard, a lint rule, a default-deny policy).
+- `fix/tests.md`: the regression cases that prove the fix, as a list.
+
+The fix files are GFM: task items (`- [ ] text`, the indented paragraphs
+after it being its note) and alerts (`> [!NOTE]`, `> [!WARNING]`). The
+checkboxes are display only: a ticked `[x]` still reads as open.
+
+`fix/short.md`:
+
+```markdown
+- [ ] Check the caller's role before saving the invitation.
+
+  In `InviteUserUseCase`, call `requireRole(caller, atLeast = request.role)`
+  before `invitationRepository.save`, as `UpdateUserUseCase` does.
+
+- [ ] Refuse role 0 from any caller that is not an administrator.
+
+  Return 403, not 400, so that a client cannot tell a forbidden role from a
+  malformed request.
+
+> [!NOTE]
+> Invitations already created with role 0 stay valid after the fix: see the
+> clean-up in the mitigation.
+```
+
+**Warnings.** `validate` and `push` warn, without refusing, when the
+document has no root cause (`rca`) or no short-term fix (`fix.short`):
+write both unless you have a reason not to.
 
 ```bash
 # List findings (unified list; opt in to drafts)
