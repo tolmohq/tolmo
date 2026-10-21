@@ -238,14 +238,14 @@ shows (summary, proof-of-concept steps, root cause, fix, CVSS) whatever the stor
 layout underneath, so never reconstruct a finding from `get` / `update`.
 
 ```bash
-tolmo findings pull TL-QUVARI              # ./TL-QUVARI/ (or -o finding.yaml)
-tolmo findings validate ./TL-QUVARI        # dry run: issues and warnings, nothing written
-tolmo findings push ./TL-QUVARI            # save; new ids and the new revision are written back
-tolmo findings publish TL-QUVARI           # needs a title and at least one exploit
-tolmo findings attachments upload TL-QUVARI ./repro.sh --kind repro-script \
+tolmo findings pull TL-BAKIRO              # ./TL-BAKIRO/ (or -o finding.yaml)
+tolmo findings validate ./TL-BAKIRO        # dry run: issues and warnings, nothing written
+tolmo findings push ./TL-BAKIRO            # save; new ids and the new revision are written back
+tolmo findings publish TL-BAKIRO           # needs a title and at least one exploit
+tolmo findings attachments upload TL-BAKIRO ./repro.sh --kind repro-script \
   --exploit <exploit id> --invocation "TOKEN=<OPERATOR_TOKEN> bash repro.sh" \
   --placeholder OPERATOR_TOKEN="A seller operator session token"
-tolmo findings attachments update TL-QUVARI <attachment id> \
+tolmo findings attachments update TL-BAKIRO <attachment id> \
   --invocation "…" --placeholder …         # change how a script runs, keep the file
 ```
 
@@ -273,7 +273,7 @@ tolmo findings attachments update TL-QUVARI <attachment id> \
 The folder (`tolmo findings pull --help` has the full layout):
 
 ```
-TL-QUVARI/
+TL-BAKIRO/
   finding.yaml       title, severity, category, modusOperandi, rcaSource, cvss, ids
   summary.md         2-3 sentences, consequence first
   rca/NN-<claim>.md  root-cause steps: frontmatter title / summary, body = code citations
@@ -395,9 +395,18 @@ tolmo findings list
 tolmo findings list --status open --severity critical --origin wiz
 tolmo findings list --drafts-only --json
 
-# Show a single finding (prints markdown description)
+# Show a single finding: header, CVSS, assets (repositories, services,
+# domains, environments), then the v1 summary / root cause / fix (or the
+# stored body of a legacy or scanner finding)
 tolmo findings get <findingId>
+# The full detail as JSON (state, recordOrigin, metas, cvss, contentV1,
+# assessment reports, ...)
 tolmo findings get <findingId> --json
+# ... plus the provider's raw payload, left out by default
+tolmo findings get <findingId> --json --raw
+# The finding's full report as markdown, the best input for an LLM. The Proof
+# of concept is included only for a person's login, never an org API token.
+tolmo findings get <findingId> --format md
 
 # Create a finding. Exactly ONE resource flag is required — --resource-name —
 # and only when you authenticate as a human (user token / `tolmo auth login`)
