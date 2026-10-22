@@ -154,6 +154,13 @@ tolmo query datadog /api/v1/monitors
 tolmo query drata /company
 tolmo query drata '/workspaces?size=100&includeTotalCount=true'
 
+# HackerOne (REST, read-only; paths are relative to /v1).
+# /reports requires filter[program][] or inbox_ids. Closed states the crawl
+# does not store: resolved, informative, duplicate, spam, not-applicable.
+# Keep page[size] modest — responses over 1MB are truncated.
+tolmo query hackerone '/me/programs?page[size]=100'
+tolmo query hackerone '/reports?filter[program][]=HANDLE&filter[state][]=resolved&filter[state][]=informative&filter[state][]=duplicate&filter[state][]=spam&filter[state][]=not-applicable&page[size]=25'
+
 # Wiz (GraphQL, read-only)
 tolmo query wiz --file query.graphql
 ```
