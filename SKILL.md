@@ -161,6 +161,25 @@ tolmo query wiz --file query.graphql
 When an org has multiple integrations for the same provider, pass
 `--integration <id>` to disambiguate (IDs are shown by `query list`).
 
+#### Ask Annie (Anyshift)
+
+Annie is Anyshift's AI SRE. `tolmo annie` asks her through the org's
+Anyshift integration; the access token stays in the backend. Each question
+gets an opaque ask id (`an_…`) to wait on or check later.
+
+```bash
+tolmo annie ask "why is checkout slow?"          # waits; steps on stderr, answer on stdout
+tolmo annie ask --rca "why are DB connections exhausted?"   # root-cause analysis
+tolmo annie ask --detach "audit IAM changes"     # prints the ask id and returns
+tolmo annie wait <ask-id> [--timeout 10m]        # block until answered
+tolmo annie show <ask-id> [--steps] [--json]     # status + answer so far
+tolmo annie ask --continue <ask-id> "follow-up"  # same conversation
+```
+
+Exit codes: 0 answered, 2 still running, 3 Annie failed, 4 no usable
+Anyshift integration (none, several without `--integration`, or token
+rejected).
+
 #### GitHub CLI passthrough (`tolmo query -- gh ...`)
 
 Runs the local `gh` CLI with a short-lived token injected by the backend
