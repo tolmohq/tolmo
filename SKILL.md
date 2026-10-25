@@ -657,6 +657,22 @@ tolmo domains list --source cert_spotter --limit 100 --json
 tolmo domains list --page 2 --limit 50
 ```
 
+### Red Agent test accounts
+
+The accounts the Red Agent signs in with, same as the Red page. Secrets go in
+by file or stdin, never as a flag value, and are never printed back.
+
+```bash
+tolmo red-agent accounts list
+tolmo red-agent accounts get <id>
+printf '%s' "$PW" | tolmo red-agent accounts create --kind password \
+  --username qa@acme.com --role admin --privileged --domain app.acme.com \
+  --secret-file -
+tolmo red-agent accounts create --file accounts.json   # object or array of API bodies
+tolmo red-agent accounts update <id> --role member --notes "rotated weekly"
+tolmo red-agent accounts delete <id>
+```
+
 ### Email (pentester mailbox)
 
 For pentesters, the platform provisions per-engagement email aliases
