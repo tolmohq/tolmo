@@ -259,7 +259,7 @@ keep drafts in addition to the published list.
 #### Author a finding as a document (pentesters and admins)
 
 A pentester or admin authors a finding as one **finding document**: pull it,
-edit it, push it, publish it. The document holds everything the finding page
+edit it, push it, submit it for publication. The document holds everything the finding page
 shows (summary, proof-of-concept steps, root cause, fix, CVSS) whatever the storage
 layout underneath, so never reconstruct a finding from `get` / `update`.
 
@@ -267,7 +267,8 @@ layout underneath, so never reconstruct a finding from `get` / `update`.
 tolmo findings pull TL-BAKIRO              # ./TL-BAKIRO/ (or -o finding.yaml)
 tolmo findings validate ./TL-BAKIRO        # dry run: issues and warnings, nothing written
 tolmo findings push ./TL-BAKIRO            # save; new ids and the new revision are written back
-tolmo findings publish TL-BAKIRO           # needs a title and at least one exploit
+tolmo findings submit TL-BAKIRO            # Tolmo replays the exploits, publishes once one reproduces
+tolmo findings submission TL-BAKIRO        # none / checking / not_reproduced / published
 tolmo findings attachments upload TL-BAKIRO ./repro.sh --kind repro-script \
   --exploit <exploit id> --invocation "TOKEN=<OPERATOR_TOKEN> bash repro.sh" \
   --placeholder OPERATOR_TOKEN="A seller operator session token"
@@ -276,6 +277,11 @@ tolmo findings attachments update TL-BAKIRO <attachment id> \
 ```
 
 - Push a document without an `id` to create a new draft.
+- **Submit, don't publish.** `submit` needs what publishing needs (a title
+  and at least one exploit), then Tolmo replays each exploit and publishes
+  the finding as you once one reproduces; a check that does not reproduce
+  leaves it a draft. Only when the person asks to skip the check, use
+  `submit --skip-check` (or `publish`), which publishes at once.
 - **Ids come from the server only.** Never type, invent or copy an exploit id:
   a push naming an exploit that is not a live exploit of this finding is
   refused. Leave `id` out to create an exploit; use `retireExploits` to
@@ -554,11 +560,12 @@ tolmo findings delete <findingId> --yes
 include it as the `url` field — link a customer straight to the finding page
 with it.
 
-`findings update` authorization: a super-admin may edit any finding; a
-pentester may edit findings **they authored** — including after publishing, so
-you can correct your own work (status still goes through `findings status`, and
-`--source-name` stays super-admin-only). You cannot edit another author's
-finding. Author self-edits are logged server-side.
+`findings update` authorization: a super-admin may edit any finding; a human
+pentester may edit findings throughout their granted org, regardless of creator
+or visibility. Status still uses `findings status`; `--source-name` stays
+super-admin-only. Edits keep the original creator and record the editing actor.
+Use pull/push for v1 or scanner report content; scanner-owned fields stay protected.
+Granted pentesters may also unpublish other authors' Tolmo findings in that org.
 
 Finding attachments are sensitive evidence. They may be any regular file up
 to 250 MiB and are streamed only through Tolmo's authenticated API; no public
@@ -566,11 +573,15 @@ object URL is returned. `--title` is optional at upload; when set, it becomes
 the primary label reviewers see next to the file name in the app. Attachment
 commands require an interactive user token for an organization member, an
 explicitly granted pentester, or a Tolmo admin.
-Machine organization tokens are rejected. Deleting an attachment additionally
-requires being its uploader or a Tolmo admin. Finding and attachment IDs both
-support unambiguous prefix matching. A scoped pentester can manage attachments
-on a draft they authored without publishing it first. Downloads default to the
-stored filename,
+Machine organization tokens are rejected by the CLI evidence commands. These
+commands target Tolmo-authored findings. A scoped pentester can manage other
+humans' uploads in the granted org, including departed pentesters' uploads.
+Deletion excludes agent/provider uploads and files with active public links,
+even for the human uploader; revoke the link first through the existing sharing
+permissions. Ordinary members still need uploader ownership to delete;
+super-admins retain their override. Finding targets accept UUIDs, case-insensitive
+display IDs, or unique UUID prefixes; attachment IDs accept unique prefixes.
+Downloads default to the stored filename,
 reduce implicit names to a safe basename, refuse to overwrite existing files
 without `--force`, and create files with owner-only permissions (`0600`). With
 `--force`, the CLI replaces the destination only after the download completes,
