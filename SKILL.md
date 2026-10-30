@@ -710,6 +710,33 @@ tolmo email read <message-id> --json
 You can also browse mail interactively in the TUI (`tolmo` with no args): the
 **Email** sidebar entry lists messages and opens each one's body.
 
+### Out-of-band callbacks (OAST sink)
+
+Your org owns a public callback zone, `<org-label>.sink.its-me-tolmo.com`. Every
+DNS query and HTTP(S) request to any name under it is recorded — nothing to
+register. Use it to prove blind SSRF, blind XSS, XXE, OOB RCE/SQLi.
+
+```bash
+tolmo oast info                                   # org zone + sink IPs
+tolmo oast url pb-ssrf-1                          # https://pb-ssrf-1.<org zone>/ (+ http, dns)
+tolmo oast interactions --name pb-ssrf-1 --follow # method, path, headers, body, source IP
+tolmo oast interactions --match /steal --since 1h --json
+
+# Pin DNS answers for a name (private addresses allowed; authoritative per name)
+tolmo oast dns set mcp --a 203.0.113.7 --a 10.0.0.1
+tolmo oast dns set rebind --a 203.0.113.7 --ttl 0
+tolmo oast dns ls; tolmo oast dns rm mcp
+
+# Serve a fixed response on every path of a name (e.g. a PoC JSON, or a 302 hop)
+tolmo oast response set mcp --body-file poc.json --content-type application/json
+tolmo oast response set hop --status 302 --header 'Location: http://169.254.169.254/' --body ''
+tolmo oast response ls; tolmo oast response rm mcp
+```
+
+HTTPS (publicly trusted certificate) covers one label below the org zone;
+deeper names work over HTTP and DNS. Changes reach the sink within ~10s and
+expire after 7 days (`--expires-in`). History is also in SQL: `oast_interactions`.
+
 ### Organization management
 
 ```bash

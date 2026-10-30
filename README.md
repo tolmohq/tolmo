@@ -166,3 +166,15 @@ tolmo findings upload ./security-scan-unified-report.md \
   --provider code-security \
   --source repo-1-security-scans
 ```
+
+### `oast`
+
+Your org's out-of-band callback sink: every DNS query and HTTP(S) request to
+any name under `<org-label>.sink.its-me-tolmo.com` is recorded, with no setup.
+
+```bash
+tolmo oast url pb-ssrf-1                           # callback URLs for a name
+tolmo oast interactions --name pb-ssrf-1 --follow  # what reached it
+tolmo oast dns set mcp --a 203.0.113.7 --a 10.0.0.1
+tolmo oast response set mcp --body-file poc.json --content-type application/json
+```
