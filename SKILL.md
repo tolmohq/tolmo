@@ -552,6 +552,18 @@ tolmo findings attachments download <findingId> <attachmentId> \
   --output ./evidence.png --force
 tolmo findings attachments delete <findingId> <attachmentId> --yes
 
+# Working papers: internal material behind a finding (Burp projects, HARs,
+# terminal logs, notes), never shown to the customer. Pentesters and Tolmo
+# admins only; the commands appear when TOLMO_PENTESTER is set. Files up to
+# 50 GB. ALWAYS pass --note: what the file is and why it was kept.
+tolmo findings working-papers upload <findingId> ./session.burp \
+  --note "Burp project for the invite IDOR, admin and member sessions"
+tolmo findings working-papers list <findingId>
+tolmo findings working-papers download <findingId> <workingPaperId>
+# Deleting should be rare: only when the pentester asks. It asks to type the
+# file name; --yes skips that and is the only way without a terminal.
+tolmo findings working-papers delete <findingId> <workingPaperId>
+
 # Delete (requires --yes)
 tolmo findings delete <findingId> --yes
 ```
@@ -714,7 +726,8 @@ You can also browse mail interactively in the TUI (`tolmo` with no args): the
 
 Your org owns a public callback zone, `<org-label>.sink.its-me-tolmo.com`. Every
 DNS query and HTTP(S) request to any name under it is recorded — nothing to
-register. Use it to prove blind SSRF, blind XSS, XXE, OOB RCE/SQLi.
+register. Use it to prove blind SSRF, blind XSS, XXE, OOB RCE/SQLi, Log4Shell/
+JNDI (LDAP on 389) and mail-based flows (SMTP on 25: mail to anyone@<name>.<zone>).
 
 ```bash
 tolmo oast info                                   # org zone + sink IPs
@@ -725,6 +738,7 @@ tolmo oast interactions --match /steal --since 1h --json
 # Pin DNS answers for a name (private addresses allowed; authoritative per name)
 tolmo oast dns set mcp --a 203.0.113.7 --a 10.0.0.1
 tolmo oast dns set rebind --a 203.0.113.7 --ttl 0
+tolmo oast dns set mail --mx '10 mx.example.com'          # also --srv, --caa
 tolmo oast dns ls; tolmo oast dns rm mcp
 
 # Serve a fixed response on every path of a name (e.g. a PoC JSON, or a 302 hop)
