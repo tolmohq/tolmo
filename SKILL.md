@@ -560,9 +560,22 @@ tolmo findings working-papers upload <findingId> ./session.burp \
   --note "Burp project for the invite IDOR, admin and member sessions"
 tolmo findings working-papers list <findingId>
 tolmo findings working-papers download <findingId> <workingPaperId>
-# Deleting should be rare: only when the pentester asks. It asks to type the
-# file name; --yes skips that and is the only way without a terminal.
+# Deleting should be rare: only when the pentester asks. Only the paper's
+# uploader (or a Tolmo admin) may. It asks to type the file name; --yes skips
+# that and is the only way without a terminal.
 tolmo findings working-papers delete <findingId> <workingPaperId>
+
+# Pentester review (same TOLMO_PENTESTER gate, pentesters and Tolmo admins
+# only, never shown to the customer): an internal comment thread and the
+# duplicate link, as in the app's "Pentester review" card.
+tolmo findings comments list <findingId>
+tolmo findings comments add <findingId> "False positive: only reachable over the VPN"
+tolmo findings comments add <findingId> --body-file notes.md
+tolmo findings comments delete <findingId> <commentId>   # your own only
+tolmo findings duplicate candidates <findingId> --query "workspace logo"
+tolmo findings duplicate set <findingId> <originalFindingId>
+tolmo findings duplicate get <findingId>
+tolmo findings duplicate clear <findingId>
 
 # Delete (requires --yes)
 tolmo findings delete <findingId> --yes
