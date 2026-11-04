@@ -248,6 +248,13 @@ and scanner rows by default; pass `--drafts-only` when you need only
 in-flight draft findings, or the deprecated `--include drafts` alias to
 keep drafts in addition to the published list.
 
+`findings list` prints at most `--limit` rows (default 200), page by page as
+they arrive, and says on stderr when more match. An org can hold millions of
+scanner rows, so filter instead of paging: `--origin tolmo` keeps
+Tolmo-authored findings only, and `--severity` takes a CSV. Pass `--all` only
+when you really need every row. `--json` prints a JSON array, `--ndjson` one
+item per line.
+
 > **Formatting the description body:** the markdown passed to
 > `--description` / `--description-file` (and edited via
 > `findings update`) is what dev/CTO customers actually read. Keep it
@@ -288,6 +295,10 @@ tolmo findings attachments update TL-BAKIRO <attachment id> \
   remove one. Leaving an exploit out of the document keeps it.
 - A push is refused when the finding changed since it was pulled
   (`revision`): pull again and reapply the edits.
+- **Read a draft back with `findings get --draft`** (or `pull`), never plain
+  `get`: `get` reads published findings only and refuses a draft. An exploit
+  you edited on a draft is unproven until the submit replays it, so only the
+  draft view shows it.
 - Steps carry `title`, `summary`, `important` and markdown details. Put
   requests in ` ```http-exchange ` fences (request, `===`, response) and
   write secrets as `<UPPER_SNAKE>` placeholders.
@@ -424,7 +435,9 @@ write both unless you have a reason not to.
 ```bash
 # List findings (unified list; opt in to drafts)
 tolmo findings list
-tolmo findings list --status open --severity critical --origin wiz
+tolmo findings list --origin tolmo --scope open
+tolmo findings list --status open --severity critical,high --origin wiz
+tolmo findings list --origin wiz --all --ndjson
 tolmo findings list --drafts-only --json
 
 # Show a single finding: header, CVSS, assets (repositories, services,
@@ -439,6 +452,12 @@ tolmo findings get <findingId> --json --raw
 # The finding's full report as markdown, the best input for an LLM. The Proof
 # of concept is included only for a person's login, never an org API token.
 tolmo findings get <findingId> --format md
+# get reads PUBLISHED findings, with the exploits that are proof. A draft is
+# refused: read it with --draft, the editor's view (the document `findings
+# pull` downloads), every live exploit included, proven or not. YAML, or JSON
+# with --json.
+tolmo findings get <findingId> --draft
+tolmo findings get <findingId> --draft --json
 
 # Create a finding. Exactly ONE resource flag is required — --resource-name —
 # and only when you authenticate as a human (user token / `tolmo auth login`)
