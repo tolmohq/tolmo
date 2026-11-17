@@ -284,8 +284,8 @@ tolmo findings attachments update TL-BAKIRO <attachment id> \
 ```
 
 - Push a document without an `id` to create a new draft.
-- **Submit, don't publish.** `submit` needs what publishing needs (a title
-  and at least one exploit), then Tolmo replays each exploit and publishes
+- **Submit, don't publish.** `submit` needs what publishing needs (a title,
+  at least one exploit and a prerequisite, below), then Tolmo replays each exploit and publishes
   the finding as you once one reproduces; a check that does not reproduce
   leaves it a draft. Only when the person asks to skip the check, use
   `submit --skip-check` (or `publish`), which publishes at once.
@@ -323,6 +323,46 @@ TL-BAKIRO/
   fix/mitigation.md  fix/short.md  fix/long.md  fix/tests.md   (each optional)
   exploits/<n>/      exploit.yaml + NN-<slug>.md proof-of-concept steps
 ```
+
+**CVSS and the prerequisite (`cvss` in `finding.yaml`).** Each live score is
+
+```yaml
+cvss:
+  - vector: CVSS:4.0/AV:N/AC:L/AT:N/PR:L/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N
+    rationales: {AV: …, PR: …}           # one sentence per metric
+    guessedPrerequisite: credentials_required
+    guessedPrerequisiteRationale: Needs any seller operator account, which self-signup gives.
+```
+
+`guessedPrerequisite` is **required**: what an attacker must already have for
+the exploit to work. Publishing and submitting are refused until a live score
+sets it, unless a replay already proved it. Choosing it is a step of scoring
+(the `cvss` skill), one value of this closed list:
+
+| Value | Shown as | Meaning |
+| --- | --- | --- |
+| `no_precondition_needed` | Nothing | Anyone on the internet, with no account of any kind. |
+| `credentials_required` | A user account | Any account in the app, whether self-signup, invited or provided. |
+| `admin_credentials_required` | An admin account | An administrator or other privileged role in the app. |
+| `code_access` | Source code access | Read or write access to the organization's source code. |
+| `cloud_access` | Cloud or internal tool access | An identity in the organization's cloud or internal tools: AWS or GCP IAM, Datadog, Tailscale, CI. |
+| `network_position` | Internal network access | A position inside the organization's network or a foothold on its servers: VPN, in-cluster pod, host shell. |
+
+- **Pick the most demanding one the exploit cannot do without.**
+- **An account is an account:** a self-signup account is still
+  `credentials_required`.
+- **What the finding itself exposes is not a prerequisite:** a key leaked by
+  an unauthenticated endpoint or a public bundle is reached with
+  `no_precondition_needed`; a secret only readable in the private repository
+  is `code_access`.
+- **Not prerequisites:** a victim's action (that is `UI`) and the
+  configuration you observed.
+- `guessedPrerequisiteRationale` is one sentence naming what must be held and
+  the evidence. Keep the two together, as `pull` writes them: leaving
+  `guessedPrerequisite` out keeps both stored values, but a
+  `guessedPrerequisite` without its rationale clears the stored rationale, and
+  `""` clears both.
+  `push` refuses a value off the list before sending anything.
 
 **Root cause (`rca/`).** The root cause is a numbered chain of reasoning
 from the entry point to the flaw: one file per step, `rca/NN-<slug>.md`,
