@@ -1,6 +1,6 @@
 # tolmo
 
-Command-line interface for the repo-1 platform.
+Command-line interface for interacting with Tolmo.
 
 ## Installation
 

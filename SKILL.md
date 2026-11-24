@@ -150,6 +150,12 @@ tolmo query sentry /api/0/organizations/acme/issues/
 # Datadog (REST)
 tolmo query datadog /api/v1/monitors
 
+# GCP (REST; Cloud Logging audit reads use one allowlisted read-only POST)
+tolmo query gcp '/cloudresourcemanager.googleapis.com/v1/projects?pageSize=1'
+tolmo query gcp /logging.googleapis.com/v2/entries:list \
+  --method POST \
+  --body '{"resourceNames":["projects/demo"],"filter":"protoPayload.methodName=\"google.cloud.secretmanager.v1.SecretManagerService.AccessSecretVersion\" AND timestamp >= \"2026-11-17T00:00:00Z\" AND timestamp <= \"2026-11-17T00:15:00Z\"","pageSize":5}'
+
 # Drata (REST, read-only; paths are relative to /public/v2)
 tolmo query drata /company
 tolmo query drata '/workspaces?size=100&includeTotalCount=true'
@@ -167,6 +173,12 @@ tolmo query wiz --file query.graphql
 
 When an org has multiple integrations for the same provider, pass
 `--integration <id>` to disambiguate (IDs are shown by `query list`).
+
+REST calls are GET by default. `--method POST` is available only for backend
+allowlisted read-only endpoints. `--body '<json object>'` and
+`--body-file <path>` are mutually exclusive and are rejected on GET requests.
+For GCP Cloud Logging, keep `resourceNames` to one scope, include RFC3339 lower
+and upper timestamp comparisons in `filter`, and set `pageSize` to 100 or less.
 
 #### Ask Annie (Anyshift)
 
@@ -601,6 +613,15 @@ tolmo findings status <findingId> false_positive \
 # View status change audit trail
 tolmo findings history <findingId>
 
+# Link a ticket that already exists, in any tracker. It syncs when its URL is
+# in a connected Linear/Jira/Fibery workspace; otherwise it is a plain link.
+tolmo findings tickets link <findingId> https://linear.app/acme/issue/SEC-12
+tolmo findings tickets link <findingId> https://tickets.example.com/view/881 \
+  --identifier INC-881
+
+# Remove a ticket link (by URL, key or link id); the ticket stays in its tracker
+tolmo findings tickets unlink <findingId> SEC-12
+
 # Manage private evidence attachments (text, images, video, or other files)
 tolmo findings attachments list <findingId>
 tolmo findings attachments list <findingId> --json
@@ -828,6 +849,7 @@ expire after 7 days (`--expires-in`). History is also in SQL: `oast_interactions
 ```bash
 tolmo org list                   # List organizations
 tolmo org switch <slug>          # Switch active organization
+tolmo org egress-ips --json      # Attribute Tolmo integration and pentest source IPs
 ```
 
 ### Skill management
